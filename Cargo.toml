@@ -1,0 +1,10 @@
+[package]
+name = "tea_partition_generator"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+duct = "0.13.7"
+lazy-regex = "3.4.1"
+serde = { version = "1.0.203", features = ["derive"] }
+serde_json = { version = "1.0.117", features = ["preserve_order"] }
