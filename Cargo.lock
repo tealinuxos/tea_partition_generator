@@ -299,6 +299,7 @@ dependencies = [
  "async-trait",
  "duct",
  "lazy-regex",
+ "regex",
  "serde",
  "serde_json",
  "tokio",
