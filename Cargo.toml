@@ -4,7 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+async-trait = "0.1.88"
 duct = "0.13.7"
 lazy-regex = "3.4.1"
 serde = { version = "1.0.203", features = ["derive"] }
 serde_json = { version = "1.0.117", features = ["preserve_order"] }
+tokio = { version = "1.38.0", features = ["rt-multi-thread", "macros"] }

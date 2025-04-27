@@ -1,0 +1,29 @@
+- menu
+    - user select which partition the os should be installed
+    - user select the fs 
+
+    - in case, user select empty disk, the process is exactly same as usual
+    - in case user select windows disk, check() return 0
+        - then, we send other os present warning
+        - also send available partition (unallocated)
+
+        - when user select that partition, do process generate config.
+
+
+
+ctx = pg:;new("/dev/partition_here")
+if ctx.check() { // true when the entire partition is empty, go ahead!!
+    // return json here 
+
+} else {
+    ctx.get_other_os_name() -> this is vector return
+    -- inform to user about other oses --
+
+    ctx.get_unallocated_partition_on("/dev/partition_here"); // return all partition that UNALLOCATED
+    -- user select which partition to be --
+    if no_partition_left || partition < 20 GB {
+        -- inform fail -- 
+    } else {
+        ctx.get_result('/dev/partition_here9') // example, /dev/partition_here9 is unallocated, and return json
+    }
+}

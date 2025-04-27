@@ -17,7 +17,7 @@ pub struct Os
 
 impl Os
 {
-    pub fn get_other_os() -> Result<Option<Vec<Self>>, Box<dyn error::Error>>
+    pub async fn get_other_os() -> Result<Option<Vec<Self>>, Box<dyn error::Error>>
     {
         let mut oses: Vec<Self> = Vec::new();
 
@@ -25,6 +25,7 @@ impl Os
 
         // For testing purposes
         let prober = concat!(
+            "/dev/nvme0n1p1@/efi/Microsoft/Boot/bootmgfw.efi:Windows Boot Manager:Windows:efi\n",
             "/dev/nvme0n1p1@/efi/Microsoft/Boot/bootmgfw.efi:Windows Boot Manager:Windows:efi"
         );
 
