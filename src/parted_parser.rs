@@ -1,33 +1,33 @@
 #[derive(Default)]
 #[derive(Debug)]
 pub struct PartedDiskInfo {
-    model: String,
-    disk_type: String,
-    disk: String,
-    sector: u64,
-    sector_size_logical: u32,
-    sector_size_physical: u32,
-    partition_table: String,
-    disk_flags: String,
+    pub model: String,
+    pub disk_type: String,
+    pub disk: String,
+    pub sector: u64,
+    pub sector_size_logical: u32,
+    pub sector_size_physical: u32,
+    pub partition_table: String,
+    pub disk_flags: String,
 }
 
 #[derive(Default)]
 #[derive(Debug)]
 pub struct PartedData {
-    number: u32,
-    start: u64,
-    end: u64,
-    size: u64,
-    fs: String,
-    partition_name: String,
-    flags: String,
+    pub number: u32,
+    pub start: u64,
+    pub end: u64,
+    pub size: u64,
+    pub fs: String,
+    pub partition_name: String,
+    pub flags: String,
 }
 
 #[derive(Default)]
 #[derive(Debug)]
 pub struct PartedResult {
-    info: PartedDiskInfo,
-    data: Vec<PartedData>,
+    pub info: PartedDiskInfo,
+    pub data: Vec<PartedData>,
 }
 
 impl PartedResult {
@@ -90,7 +90,6 @@ impl PartedResult {
             match iter_counter {
                 0 => {
                     let temp = raw_str_i.to_string();
-                    println!("{:?}", temp);
                     buf.number = temp.parse::<u32>().unwrap();
                 },
                 1 => {
@@ -119,7 +118,7 @@ impl PartedResult {
                 }
                 _ => {}
             }
-            println!("{:?}", raw_str_i);
+            // println!("{:?}", raw_str_i);
             iter_counter+=1;
         }
 
@@ -136,7 +135,7 @@ impl PartedResult {
 
         for raw_str_semicolon_split_i in raw_str_semicolon_split {
             let sanitized_raw_str = raw_str_semicolon_split_i.trim_start_matches('\n');
-            println!("{:?}", sanitized_raw_str);
+            // println!("{:?}", sanitized_raw_str);
 
             if sanitized_raw_str == "" {
                 continue;
@@ -153,7 +152,7 @@ impl PartedResult {
 
             // debug
             if iter_counter > 1 {
-                println!("num: {}", iter_counter);
+                // println!("num: {}", iter_counter);
                 let ret = Self::_gparted_disk_partition_parse(sanitized_raw_str.to_string().clone());
                 parted_data_buf.push(ret);
             }

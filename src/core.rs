@@ -2,6 +2,8 @@ use crate::os;
 use async_trait::async_trait;
 use serde_json::{Error, Result};
 use crate::disk_helper;
+use crate::parted_parser;
+use duct::cmd;
 pub struct TeaPartitionGenerator {
     selected: String,
 }
@@ -39,6 +41,7 @@ impl TeaPartitionGenerator {
 #[async_trait]
 pub trait PartitionGenerator {
     async fn has_other_os(&self) -> bool;
+    async fn find_empty_space_sector_area(&self) -> Option<(u64, u64)>;
 }
 
 #[async_trait]
@@ -64,5 +67,27 @@ impl PartitionGenerator for TeaPartitionGenerator {
         } else {
             false
         }
+    }
+
+    // convention: start ~ end
+    async fn find_empty_space_sector_area(&self) -> Option<(u64, u64)> {
+        // the disk must be larger than 7 GiB (currently)
+        // let run = format!(, self.selected);
+        let parted = cmd!("sudo", "parted", "-m", self.selected.clone(), "unit", "s", "print", "free").read();
+
+        if let Ok(parted_data) = parted {
+            let ret = parted_parser::PartedResult::parse(parted_data);
+
+            for parted_data_i in &ret.data {
+                // NOTE: Tunning this number
+                if ((ret.info.sector_size_logical as u64) * parted_data_i.size) > 7516192768 && parted_data_i.fs == "free" {
+                    return Some((parted_data_i.start, parted_data_i.end))
+                }
+            }
+
+            // println!("{:#?}", ret);
+        }
+
+        Some((0,0))
     }
 }
