@@ -52,7 +52,7 @@ impl TeaPartitionGenerator {
 #[async_trait]
 pub trait PartitionGenerator {
     async fn has_other_os(&self) -> bool;
-    async fn disk_list_other_os(&self) -> Option<Vec<OsOnDisk>>;
+    async fn disk_list_other_os() -> Option<Vec<OsOnDisk>>;
     async fn find_empty_space_sector_area(&self) -> Option<(u64, u64)>;
 }
 
@@ -108,7 +108,7 @@ impl PartitionGenerator for TeaPartitionGenerator {
     // example:
     // /dev/sdb instead /dev/sdb3 (in os prober output)
     // and make sure if the os prober output is match with current partition layout
-    async fn disk_list_other_os(&self) -> Option<Vec<OsOnDisk>> {
+    async fn disk_list_other_os() -> Option<Vec<OsOnDisk>> {
         let ret = os::Os::get_other_os().await;
 
         let mut buf: Vec<OsOnDisk> = Vec::new();
