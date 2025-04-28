@@ -8,6 +8,17 @@ pub struct TeaPartitionGenerator {
     selected: String,
 }
 
+// this struct bring such
+// /dev/sdb instead partition like /dev/sdb3 
+// whatever it is
+
+#[derive(Debug)]
+pub struct OsOnDisk
+{
+    pub name: String,
+    pub path: String
+}
+
 impl TeaPartitionGenerator {
     pub fn new(selected: String) -> TeaPartitionGenerator {
         TeaPartitionGenerator { selected }
@@ -41,6 +52,7 @@ impl TeaPartitionGenerator {
 #[async_trait]
 pub trait PartitionGenerator {
     async fn has_other_os(&self) -> bool;
+    async fn disk_list_other_os(&self) -> Option<Vec<OsOnDisk>>;
     async fn find_empty_space_sector_area(&self) -> Option<(u64, u64)>;
 }
 
@@ -90,4 +102,49 @@ impl PartitionGenerator for TeaPartitionGenerator {
 
         Some((0,0))
     }
+
+    // this func return 
+    // 
+    // example:
+    // /dev/sdb instead /dev/sdb3 (in os prober output)
+    // and make sure if the os prober output is match with current partition layout
+    async fn disk_list_other_os(&self) -> Option<Vec<OsOnDisk>> {
+        let ret = os::Os::get_other_os().await;
+
+        let mut buf: Vec<OsOnDisk> = Vec::new();
+
+        if let Ok(ret_val) = ret {
+            if let Some(data) = ret_val {
+                for data_i in data {
+                    if data_i.path.starts_with("/dev/nvme") {
+                        // handle nvme
+                        let ret = disk_helper::nvme_split(data_i.path.clone());
+                        if let Some(ret_val) = ret {
+                            buf.push(OsOnDisk {
+                                path: ret_val.0,
+                                name: data_i.name
+                            });
+
+                        }
+                    } else if data_i.path.starts_with("/dev/sd") { // scsi 
+        
+                        let ret = disk_helper::scsi_split(data_i.path.clone());
+                        if let Some(ret_val) = ret {
+                            buf.push(OsOnDisk {
+                                path: ret_val,
+                                name: data_i.name
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        if buf.len() == 0 {
+            None
+        } else {
+            Some(buf)
+        }
+    }
+     
 }

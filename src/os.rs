@@ -26,7 +26,8 @@ impl Os
         // For testing purposes
         // let prober = concat!(
         //     "/dev/sdd1@/efi/Microsoft/Boot/bootmgfw.efi:Windows Boot Manager:Windows:efi\n",
-        //     "/dev/sdd1@/efi/Microsoft/Boot/bootmgfw.efi:Windows Boot Manager:Windows:efi"
+        //     "/dev/sde1@/efi/Microsoft/Boot/bootmgfw.efi:Wondows Boot Manager:Windows:efi\n",
+        //     "/dev/nvme0n1p1@/efi/Microsoft/Boot/bootmgfw.efi:Windows Boot Manager:Windows:efi"
         // );
 
         let entries: Vec<String> = prober
