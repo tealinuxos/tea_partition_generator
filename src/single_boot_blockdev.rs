@@ -62,7 +62,7 @@ pub trait SingleBootBlockdevice {
     fn get_blkinfo(blkname: &String) -> Result<PartitionTable, String>;
     fn getblkbytes(&self) -> Option<u64>;
     fn getblksector(&self) -> Option<u64>;
-    fn getresult(&self) -> Result<Vec<Partition>, Box<dyn std::error::Error>>;
+    fn getresult(&self) -> Result<Storage, Box<dyn std::error::Error>>;
     fn _export_data(&self) -> ();
 }
 
@@ -139,7 +139,7 @@ impl SingleBootBlockdevice for Blkstuff {
         }
     }
 
-    fn getresult(&self) -> Result<Vec<Partition>, Box<dyn std::error::Error>> {
+    fn getresult(&self) -> Result<Storage, Box<dyn std::error::Error>> {
         // let Ok(blksize) = self.partitiontable.partitiontable.sectorsize;
         let current_size = self.getblkbytes();
         let current_size_sector = self.getblksector();
@@ -216,7 +216,13 @@ impl SingleBootBlockdevice for Blkstuff {
         // println!("DEBUG current_selected_block_size: {:#?}", current_size);
         // println!("{:#?}", disks_export);
 
-        Ok(disks_export)
+        Ok(Storage {
+            disk_path: Some(self.selected_blockdev.clone()),
+            partition_table: Some(self.selected_partition_table.clone()),
+            new_partition_table: true,
+            layout_changed: true,
+            partitions: Some(disks_export)
+        })
         // return Err(Box::new(
         //     error::TealinuxAutoPartitionErr::InsufficientStorage(
         //         "something error with getblkbytes()".to_string(),

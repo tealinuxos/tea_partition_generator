@@ -14,9 +14,9 @@ pub struct Partition
     pub start: u64,
     pub end: u64,
     pub size: u64,
-
 }
 
+#[derive(Debug)]
 pub struct Storage
 {
     pub disk_path: Option<String>,

@@ -8,3 +8,4 @@ pub mod single_boot_blockdev;
 
 pub mod exception;
 pub mod blueprint;
+pub mod mkpart;
