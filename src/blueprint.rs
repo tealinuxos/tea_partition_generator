@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 // PATCH THIS FILE if in production, does we need a struct signature conversion ?
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all="camelCase")]
 pub struct Partition
 {
@@ -16,7 +16,7 @@ pub struct Partition
     pub size: u64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Storage
 {
     pub disk_path: Option<String>,
