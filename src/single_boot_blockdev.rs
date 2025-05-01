@@ -253,7 +253,7 @@ impl SingleBootBlockdevice for Blkstuff {
     }
 
     fn gen_current_bootloader(&self) -> Option<Bootloader> {
-        if self.selected_partition_table.to_lowercase() == "MBR" {
+        if self.selected_partition_table.to_lowercase() == "mbr" {
             Some(Bootloader {
                 firmware_type: tea_arch_chroot_lib::resource::FirmwareKind::BIOS,
                 path: Some(self.selected_blockdev.clone())
