@@ -3,7 +3,6 @@ use tea_partition_generator::single_boot_blockdev::{
     Blkstuff
 };
 
-use tea_partition_generator::blueprint::Partition;
 use tea_partition_generator::mounting::{Mount, MountPoint};
 use tea_partition_generator::mkpart::Partgen;
 

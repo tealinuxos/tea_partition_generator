@@ -2,7 +2,7 @@
 use duct::cmd;
 use std::{clone, str::FromStr};
 use serde::{Deserialize, Serialize};
-use crate::blueprint::{Partition, Storage}; 
+use crate::blueprint::{Partition, Storage, Bootloader}; 
 use crate::exception;
 use crate::disk_helper::{gb2sector, mb2sector};
 
@@ -63,6 +63,7 @@ pub trait SingleBootBlockdevice {
     fn getblkbytes(&self) -> Option<u64>;
     fn getblksector(&self) -> Option<u64>;
     fn getresult(&self) -> Result<Storage, Box<dyn std::error::Error>>;
+    fn gen_current_bootloader(&self) -> Option<Bootloader>;
     fn _export_data(&self) -> ();
 }
 
@@ -249,6 +250,20 @@ impl SingleBootBlockdevice for Blkstuff {
 
     fn _export_data(&self) -> () {
         println!("{:#?}", self.partitiontable);
+    }
+
+    fn gen_current_bootloader(&self) -> Option<Bootloader> {
+        if self.selected_partition_table.to_lowercase() == "MBR" {
+            Some(Bootloader {
+                firmware_type: tea_arch_chroot_lib::resource::FirmwareKind::BIOS,
+                path: Some(self.selected_blockdev.clone())
+            })
+        } else {
+            Some(Bootloader {
+                firmware_type: tea_arch_chroot_lib::resource::FirmwareKind::UEFI,
+                path: Some(format!("{}1", self.selected_blockdev.clone())),
+            })
+        }
     }
 
     // fn convert_block2bytes()
