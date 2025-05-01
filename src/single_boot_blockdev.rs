@@ -6,6 +6,7 @@ use crate::blueprint::{Partition, Storage, Bootloader};
 use crate::exception;
 use crate::disk_helper::{gb2sector, mb2sector};
 
+
 // karna di mode ini, user minta single boot & clean install hdd, maka kita butuh 2 struct 
 // karna seantero disk, partition table, dll semua diubah
 
@@ -53,7 +54,7 @@ pub struct Blkstuff {
     pub selected_blockdev: String,
     pub selected_fs: String,
     pub selected_partition_table: String,
-    pub partitiontable: PartitionTable,
+    pub partitiontable: PartitionTable
 }
 
 
@@ -64,12 +65,13 @@ pub trait SingleBootBlockdevice {
     fn getblksector(&self) -> Option<u64>;
     fn getresult(&self) -> Result<Storage, Box<dyn std::error::Error>>;
     fn gen_current_bootloader(&self) -> Option<Bootloader>;
+    fn get_sector(&self, blkname: String) -> Result<u64, String>;
     fn _export_data(&self) -> ();
 }
 
 impl SingleBootBlockdevice for Blkstuff {
     fn blockdevice(blkname: String, fs: String, partition_table: String) -> Self {
-        let _blkdata = Self::get_blkinfo(&blkname).unwrap_or_else(|e| {
+        let _blkdata: PartitionTable = Self::get_blkinfo(&blkname).unwrap_or_else(|e| {
             eprintln!("ERROR!!!!!!: {}", e);
             PartitionTable {
                 partitiontable: BlockDeviceData {
@@ -89,7 +91,22 @@ impl SingleBootBlockdevice for Blkstuff {
             selected_blockdev: blkname,
             selected_fs: fs,
             selected_partition_table: partition_table,
-            partitiontable: _blkdata,
+            partitiontable: _blkdata
+        }
+    }
+
+    fn get_sector(&self, blkname: String) -> Result<u64, String> {
+        let sfdisk_res = cmd!("blockdev", "--getss", blkname).read();
+        if let Ok(sfdisk_res_val) = sfdisk_res {
+            let conv = sfdisk_res_val.parse::<u64>();
+
+            if let Ok(conv_val) = conv {
+                Ok(conv_val)
+            } else {
+                Err("blockdev getss fail str to int conversion".to_string())
+            }
+        } else {
+            Err("blockdev getss failed".to_string())
         }
     }
 
@@ -144,6 +161,7 @@ impl SingleBootBlockdevice for Blkstuff {
         // let Ok(blksize) = self.partitiontable.partitiontable.sectorsize;
         let current_size = self.getblkbytes();
         let current_size_sector = self.getblksector();
+        let current_sector = self.get_sector(self.selected_blockdev.clone())?;
 
         // this func itended to return as json
         let mut disks_export: Vec<Partition> = Vec::new();
@@ -171,13 +189,13 @@ impl SingleBootBlockdevice for Blkstuff {
                     filesystem: Some("fat32".to_string()),
                     format: true,
                     start: 2048, // aligment
-                    end: 2048 + mb2sector(512, self.partitiontable.partitiontable.sectorsize),
-                    size: mb2sector(512, self.partitiontable.partitiontable.sectorsize),
+                    end: 2048 + mb2sector(512, current_sector),
+                    size: mb2sector(512, current_sector),
                 });
     
                 // align + size (prev)
                 let last_sector: u64 =
-                    2048 + mb2sector(512, self.partitiontable.partitiontable.sectorsize);
+                    2048 + mb2sector(512, current_sector);
     
                 // this is root partition
                 disks_export.push(Partition {
