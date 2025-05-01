@@ -182,7 +182,7 @@ impl SingleBootBlockdevice for Blkstuff {
             
             if self.selected_partition_table.to_lowercase() == "gpt" {
                 disks_export.push(Partition {
-                    number: 0,
+                    number: 1,
                     disk_path: Some(self.selected_blockdev.clone()),
                     path: Some(format!("{}1", self.selected_blockdev.clone())),
                     mountpoint: Some("/boot/efi".to_string()),
@@ -199,7 +199,7 @@ impl SingleBootBlockdevice for Blkstuff {
     
                 // this is root partition
                 disks_export.push(Partition {
-                    number: 1,
+                    number: 2,
                     disk_path: Some(self.selected_blockdev.clone()),
                     path: Some(format!("{}2", self.selected_blockdev.clone())),
                     mountpoint: Some("/".to_string()), // some exception if BTRFS is used, this is unneed
@@ -211,7 +211,7 @@ impl SingleBootBlockdevice for Blkstuff {
                 });    
             } else {
                 disks_export.push(Partition {
-                    number: 0,
+                    number: 1,
                     disk_path: Some(self.selected_blockdev.clone()),
                     path: Some(format!("{}1", self.selected_blockdev.clone())),
                     mountpoint: Some("/".to_string()),

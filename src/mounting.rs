@@ -124,9 +124,10 @@ impl Mount for MountPoint {
 
             for partitions_val_i in partitions_val {
                 if let Some(data) = &partitions_val_i.mountpoint {
-
+                    println!("path -> {}", data.clone());
                     if data == "/boot/efi" {
                         let local_mount = Self::_gen_mountpoint_strformat(data.clone());
+                        println!("running mkdir --parent {}", local_mount);
                         Self::mkdir_force(local_mount.clone());
 
                         if let Some(path_data) = &partitions_val_i.path {
@@ -136,6 +137,7 @@ impl Mount for MountPoint {
 
                     if data == "/" {
                         let local_mount = Self::_gen_mountpoint_strformat(data.clone());
+                        println!("running mkdir --parent {}", local_mount);
                         Self::mkdir_force(local_mount.clone());
 
                         if partitions_val_i.filesystem.as_deref() == Some("btrfs") {
