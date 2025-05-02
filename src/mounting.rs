@@ -51,7 +51,7 @@ impl MountPoint {
     }
 
     fn mkdir_force(dir: String) {
-        let data = cmd!("mkdir", "--parents", dir).run();
+        let data = cmd!("mkdir", "--parent", dir).run();
         println!("{:#?}", data);
     }
 
@@ -97,10 +97,10 @@ impl MountPoint {
     }
 
     fn _handle_ext4_mount(data: &Partition) -> i32 {
-        if let Some(path) = &data.path {
+        if let Some(path_val) = &data.path {
             let _ = Self::mount(
-                &path, 
-                &Self::_gen_mountpoint_strformat("".to_string()), 
+                &path_val, 
+                &Self::_gen_mountpoint_strformat("/".to_string()), 
                 None);
         } else {
             return -1;
@@ -123,9 +123,11 @@ impl Mount for MountPoint {
 
         if let Some(partitions_val) = &self.data.partitions {
 
-            for partitions_val_i in partitions_val {
-                if let Some(data) = &partitions_val_i.mountpoint {
-                    println!("path -> {}", data.clone());
+            let reversed_partition_config: Vec<crate::blueprint::Partition> = partitions_val.iter().rev().cloned().collect();
+
+            for partitions_val_i in reversed_partition_config {
+                if let Some(ref data) = partitions_val_i.mountpoint {
+                    println!("path --> {}", data.clone());
                     if data == "/boot/efi" {
                         let local_mount = Self::_gen_mountpoint_strformat(data.clone());
                         println!("running mkdir --parent {}", local_mount);
@@ -142,11 +144,11 @@ impl Mount for MountPoint {
                         Self::mkdir_force(local_mount.clone());
 
                         if partitions_val_i.filesystem.as_deref() == Some("btrfs") {
-                            Self::_handle_btrfs_mount(partitions_val_i);
+                            Self::_handle_btrfs_mount(&partitions_val_i);
                         }
 
                         if partitions_val_i.filesystem.as_deref() == Some("ext4") {
-                            Self::_handle_ext4_mount(partitions_val_i);
+                            Self::_handle_ext4_mount(&partitions_val_i);
                         }
 
                     }
