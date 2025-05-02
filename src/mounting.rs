@@ -51,7 +51,8 @@ impl MountPoint {
     }
 
     fn mkdir_force(dir: String) {
-        let _ = cmd!("mkdir", "--parents", dir).run();
+        let data = cmd!("mkdir", "--parents", dir).run();
+        println!("{:#?}", data);
     }
 
     fn _handle_btrfs_mount(data: &Partition) -> i32 {
