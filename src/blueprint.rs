@@ -10,6 +10,7 @@ pub struct Partition
     pub path: Option<String>,
     pub mountpoint: Option<String>,
     pub filesystem: Option<String>,
+    pub label: Option<String>,
     pub format: bool,
     pub start: u64,
     pub end: u64,

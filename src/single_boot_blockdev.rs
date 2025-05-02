@@ -187,6 +187,7 @@ impl SingleBootBlockdevice for Blkstuff {
                     path: Some(format!("{}1", self.selected_blockdev.clone())),
                     mountpoint: Some("/boot/efi".to_string()),
                     filesystem: Some("fat32".to_string()),
+                    label: None,
                     format: true,
                     start: 2048, // aligment
                     end: 2048 + mb2sector(512, current_sector),
@@ -204,6 +205,7 @@ impl SingleBootBlockdevice for Blkstuff {
                     path: Some(format!("{}2", self.selected_blockdev.clone())),
                     mountpoint: Some("/".to_string()), // some exception if BTRFS is used, this is unneed
                     filesystem: Some(self.selected_fs.to_string()),
+                    label: None,
                     format: true,
                     start: last_sector + 1,
                     end: current_size_sector.unwrap() - 2048,
@@ -216,6 +218,7 @@ impl SingleBootBlockdevice for Blkstuff {
                     path: Some(format!("{}1", self.selected_blockdev.clone())),
                     mountpoint: Some("/".to_string()),
                     filesystem: Some(self.selected_fs.to_string()),
+                    label: None,
                     format: true,
                     start: 2048, // aligment
                     end: current_size_sector.unwrap() - 2048,
