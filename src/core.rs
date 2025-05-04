@@ -49,17 +49,15 @@ impl TeaPartitionGenerator {
     }
 }
 
-#[async_trait]
 pub trait PartitionGenerator {
-    async fn has_other_os(&self) -> bool;
-    async fn disk_list_other_os() -> Option<Vec<OsOnDisk>>;
-    async fn find_empty_space_sector_area(&self) -> Option<(u64, u64)>;
+    fn has_other_os(&self) -> bool;
+    fn disk_list_other_os() -> Option<Vec<OsOnDisk>>;
+    fn find_empty_space_sector_area(&self) -> (u64, u64);
 }
 
-#[async_trait]
 impl PartitionGenerator for TeaPartitionGenerator {
-    async fn has_other_os(&self) -> bool {
-        let ret = os::Os::get_other_os().await;
+    fn has_other_os(&self) -> bool {
+        let ret = os::Os::get_other_os();
 
         if let Ok(ret_val) = ret {
             if let Some(data) = ret_val {
@@ -82,7 +80,7 @@ impl PartitionGenerator for TeaPartitionGenerator {
     }
 
     // convention: start ~ end
-    async fn find_empty_space_sector_area(&self) -> Option<(u64, u64)> {
+    fn find_empty_space_sector_area(&self) -> (u64, u64) {
         // the disk must be larger than 7 GiB (currently)
         // let run = format!(, self.selected);
         let parted = cmd!("sudo", "parted", "-m", self.selected.clone(), "unit", "s", "print", "free").read();
@@ -93,14 +91,14 @@ impl PartitionGenerator for TeaPartitionGenerator {
             for parted_data_i in &ret.data {
                 // NOTE: Tunning this number
                 if ((ret.info.sector_size_logical as u64) * parted_data_i.size) > 7516192768 && parted_data_i.fs == "free" {
-                    return Some((parted_data_i.start, parted_data_i.end))
+                    return (parted_data_i.start, parted_data_i.end)
                 }
             }
 
             // println!("{:#?}", ret);
         }
 
-        Some((0,0))
+        (0,0)
     }
 
     // this func return 
@@ -108,8 +106,8 @@ impl PartitionGenerator for TeaPartitionGenerator {
     // example:
     // /dev/sdb instead /dev/sdb3 (in os prober output)
     // and make sure if the os prober output is match with current partition layout
-    async fn disk_list_other_os() -> Option<Vec<OsOnDisk>> {
-        let ret = os::Os::get_other_os().await;
+    fn disk_list_other_os() -> Option<Vec<OsOnDisk>> {
+        let ret = os::Os::get_other_os();
 
         let mut buf: Vec<OsOnDisk> = Vec::new();
 

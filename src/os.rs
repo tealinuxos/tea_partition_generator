@@ -17,7 +17,7 @@ pub struct Os
 
 impl Os
 {
-    pub async fn get_other_os() -> Result<Option<Vec<Self>>, Box<dyn error::Error>>
+    pub fn get_other_os() -> Result<Option<Vec<Self>>, Box<dyn error::Error>>
     {
         let mut oses: Vec<Self> = Vec::new();
 
