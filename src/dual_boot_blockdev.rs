@@ -4,10 +4,11 @@ use tea_arch_chroot_lib::resource::FirmwareKind;
 use std::{clone, str::FromStr};
 use serde::{Deserialize, Serialize};
 use crate::blueprint::Storage;
+// use crate::blueprint::{Storage, Partition};
 use crate::exception;
 use crate::disk_helper::{gb2sector, mb2sector};
 use std::path::Path;
-
+use crate::core::{PartitionGenerator, TeaPartitionGenerator};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DiskInfo {
@@ -67,6 +68,8 @@ pub trait DualBootBlockdevice {
     fn parted_partition_structure(&self) -> Option<DiskInfo>;
     fn getresult(&self) -> Result<Storage, String>;
     fn _check(&self) -> Result<bool, String>;
+    fn _generate_json(&self) -> Storage;
+    fn _disk_check_requirements(&self) -> Result<bool, String>;
 }
 
 impl DualBootBlockdevice for DualbootBlkstuff {
@@ -120,29 +123,88 @@ impl DualBootBlockdevice for DualbootBlkstuff {
     fn _check(&self) -> Result<bool, String> {
         let data = self.check_base_disk_layout();
 
-        if let Some(mode_val) = data.mode {
-            if data.partition_type == Some("gpt".to_string()) && mode_val == FirmwareKind::UEFI {
+        if let Some(ref mode_val) = data.mode {
+            if data.partition_type == Some("gpt".to_string()) && *mode_val == FirmwareKind::UEFI {
                 return Ok(true);
             } 
             
-            if data.partition_type == Some("msdos".to_string()) && mode_val == FirmwareKind::BIOS {
+            if data.partition_type == Some("msdos".to_string()) && *mode_val == FirmwareKind::BIOS {
                 return Ok(true);
             } 
         };
 
-        return Err("partition and boot mode in yout system is mismatch or unusual".to_string());
+        let buf = format!("your partition (which is {}) and boot mode (which is {}) in yout system is mismatch or unusual", data.partition_type.unwrap().to_uppercase(), data.mode.unwrap().as_str());
+
+        return Err(buf);   
+    }
+    
+    // should be one OS (minimum) inside
+    // unallocated partition must be larger than 20 GiB
+    fn _disk_check_requirements(&self) -> Result<bool, String> {
+        let ctx = TeaPartitionGenerator::new(self.selected_blockdev.clone());
+        let has_other_os = ctx.has_other_os(); // check 1
+
+        let mut has_unallocated_space = false;
+
+        let (start, end) = ctx.find_empty_space_sector_area();
+        if (start > 0 && end > 0) {
+            has_unallocated_space = true;   // check 2
+        }
         
+
+        let sector_size = 0;
+        if has_unallocated_space && has_other_os  {
+            // check disk size
+            let (start, end) = ctx.find_empty_space_sector_area();
+            let size = end - start;
+
+            let check_disk_layout = self.parted_partition_structure();
+        
+            if let Some(check_disk_layout_val) = check_disk_layout {
+                let wanted_size: u64 = gb2sector(20, sector_size);
+
+                if (size >= wanted_size) {
+                    return Ok(true);
+                } else {
+                    return Err("You have other os & uninitialized free space, but its lower than 20 GB.".to_string());
+                }
+            } else {
+                return Err("something error with parted_partition_structure.".to_string())
+            }
+
+            
+        } else {
+            return Err("your device didn't have secondary os & free space".to_string())
+        }
+
     }
 
-    fn getresult(&self) -> Result<Storage, String> {
+    fn _generate_json(&self) -> crate::blueprint::Storage {
+        Storage::default()
+    }
+
+    fn getresult(&self) -> Result<crate::blueprint::Storage, String> {
         let check = self._check();
 
-        if let Ok(check_val) = check {
-            println!("{:#?}", check_val);
-            Ok(Storage::default())
-        } else {
-            Err("generation failed".to_string())
+        match check {
+            Ok(check_val) => {
+                println!("{:#?}", check_val);
+                let check2 = self._disk_check_requirements();
+                match check2 {
+                    Ok(check2_val) => {
+                        Ok(self._generate_json())
+                    },
+                    Err(e) => {
+                        Err(e)
+                    }
+                }
+            }
+            Err(e) => {
+                let buf = format!("generation failed: {}", e);
+                Err(buf)
+            }
         }
+        
 
     }
 }
