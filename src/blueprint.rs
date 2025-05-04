@@ -16,7 +16,7 @@ pub struct Partition
     pub size: u64,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Storage
 {
     pub disk_path: Option<String>,
