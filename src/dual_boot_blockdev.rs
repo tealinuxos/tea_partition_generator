@@ -187,7 +187,6 @@ impl DualBootBlockdevice for DualbootBlkstuff {
             for x in <Vec<Partition> as Clone>::clone(&data_val.disk.partitions).into_iter() {
                 if <u32 as TryInto<i32>>::try_into(x.number).unwrap() > highest {
                     highest = x.number.try_into().unwrap();
-                    println!("->  jjj {}", x.number);
                 }
             }
             return highest;
