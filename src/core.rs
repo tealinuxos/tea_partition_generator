@@ -19,6 +19,13 @@ pub struct OsOnDisk
     pub path: String
 }
 
+#[derive(Debug)]
+pub struct EmptySpace {
+    pub number: i32,    // this number is generated sequentially though vector push, not from parted
+    pub start: u64,
+    pub end: u64,
+}
+
 impl TeaPartitionGenerator {
     pub fn new(selected: String) -> TeaPartitionGenerator {
         TeaPartitionGenerator { selected }
@@ -53,6 +60,7 @@ pub trait PartitionGenerator {
     fn has_other_os(&self) -> bool;
     fn disk_list_other_os() -> Option<Vec<OsOnDisk>>;
     fn find_empty_space_sector_area(&self) -> (u64, u64);
+    fn find_empty_space_sector_areav(&self) -> Vec<EmptySpace>;
 }
 
 impl PartitionGenerator for TeaPartitionGenerator {
@@ -80,6 +88,7 @@ impl PartitionGenerator for TeaPartitionGenerator {
     }
 
     // convention: start ~ end
+    // DEPRECATED
     fn find_empty_space_sector_area(&self) -> (u64, u64) {
         // the disk must be larger than 7 GiB (currently)
         // let run = format!(, self.selected);
@@ -99,6 +108,39 @@ impl PartitionGenerator for TeaPartitionGenerator {
         }
 
         (0,0)
+    }
+
+
+    fn find_empty_space_sector_areav(&self) -> Vec<EmptySpace> {
+        // the disk must be larger than 7 GiB (currently)
+        // let run = format!(, self.selected);
+        let mut buf: Vec<EmptySpace> = Vec::new();
+        let parted = cmd!("sudo", "parted", "-m", self.selected.clone(), "unit", "s", "print", "free").read();
+
+        if let Ok(parted_data) = parted {
+            let ret = parted_parser::PartedResult::parse(parted_data);
+
+            let mut n = 1;
+
+            for parted_data_i in &ret.data {
+                // NOTE: Tunning this number, x * (1024 * 1024 * 1024)
+
+                if ((ret.info.sector_size_logical as u64) * parted_data_i.size) > 7516192768 && parted_data_i.fs == "free" {
+                    // return (parted_data_i.start, parted_data_i.end)
+                    // buf.push((parted_data_i.start, parted_data_i.end))
+                    buf.push(EmptySpace {
+                        number: n,
+                        start: parted_data_i.start,
+                        end: parted_data_i.end,
+                    });
+                    n = n + 1;
+                }
+            }
+
+            // println!("{:#?}", ret);
+        }
+
+        buf
     }
 
     // this func return 
