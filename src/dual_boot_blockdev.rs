@@ -1,6 +1,6 @@
 // this file is executed when user want Erase disk & clean install
 use duct::cmd;
-use tea_arch_chroot_lib::resource::FirmwareKind;
+use tea_arch_chroot_lib::resource::{FirmwareKind, MethodKind};
 use std::{clone, str::FromStr};
 use serde::{Deserialize, Serialize};
 use crate::blueprint::Storage;
@@ -66,10 +66,10 @@ pub trait DualBootBlockdevice {
     fn blockdevice(blkname: String, fs: String) -> Self;
     fn check_base_disk_layout(&self) -> DiskLayout;
     fn parted_partition_structure(&self) -> Option<DiskInfo>;
-    fn getresult(&self) -> Result<Storage, String>;
+    fn getresult(&self, start: u64, end: u64) -> Result<Storage, String>;
     fn _check(&self) -> Result<bool, String>;
-    fn _generate_json(&self) -> Storage;
-    fn _disk_check_requirements(&self) -> Result<bool, String>;
+    fn _generate_json(&self, start: u64, end: u64) -> Storage;
+    // fn _disk_check_requirements(&self) -> Result<bool, String>;
     fn get_highest_partition_number(&self, data: &Option<DiskInfo>) -> i32;
 }
 
@@ -141,44 +141,44 @@ impl DualBootBlockdevice for DualbootBlkstuff {
     
     // should be one OS (minimum) inside
     // unallocated partition must be larger than 20 GiB
-    fn _disk_check_requirements(&self) -> Result<bool, String> {
-        let ctx = TeaPartitionGenerator::new(self.selected_blockdev.clone());
-        let has_other_os = ctx.has_other_os(); // check 1
+    // fn _disk_check_requirements(&self) -> Result<bool, String> {
+    //     let ctx = TeaPartitionGenerator::new(self.selected_blockdev.clone());
+    //     let has_other_os = ctx.has_other_os(); // check 1
 
-        let mut has_unallocated_space = false;
+    //     let mut has_unallocated_space = false;
 
-        let (start, end) = ctx.find_empty_space_sector_area();
-        if (start > 0 && end > 0) {
-            has_unallocated_space = true;   // check 2
-        }
+    //     let (start, end) = ctx.find_empty_space_sector_area();
+    //     if start > 0 && end > 0 {
+    //         has_unallocated_space = true;   // check 2
+    //     }
         
 
-        let sector_size = 0;
-        if has_unallocated_space && has_other_os  {
-            // check disk size
-            let (start, end) = ctx.find_empty_space_sector_area();
-            let size = end - start;
+    //     let sector_size = 0;
+    //     if has_unallocated_space && has_other_os  {
+    //         // check disk size
+    //         let (start, end) = ctx.find_empty_space_sector_area();
+    //         let size = end - start;
 
-            let check_disk_layout = self.parted_partition_structure();
+    //         let check_disk_layout = self.parted_partition_structure();
         
-            if let Some(check_disk_layout_val) = check_disk_layout {
-                let wanted_size: u64 = gb2sector(20, sector_size);
+    //         if let Some(check_disk_layout_val) = check_disk_layout {
+    //             let wanted_size: u64 = gb2sector(20, sector_size);
 
-                if (size >= wanted_size) {
-                    return Ok(true);
-                } else {
-                    return Err("You have other os & uninitialized free space, but its lower than 20 GB.".to_string());
-                }
-            } else {
-                return Err("something error with parted_partition_structure.".to_string())
-            }
+    //             if size >= wanted_size {
+    //                 return Ok(true);
+    //             } else {
+    //                 return Err("You have other os & uninitialized free space, but its lower than 20 GB.".to_string());
+    //             }
+    //         } else {
+    //             return Err("something error with parted_partition_structure.".to_string())
+    //         }
 
             
-        } else {
-            return Err("your device didn't have secondary OS or free space".to_string())
-        }
+    //     } else {
+    //         return Err("your device didn't have secondary OS or free space".to_string())
+    //     }
 
-    }
+    // }
 
     fn get_highest_partition_number(&self, data: &Option<DiskInfo>) -> i32 {
         if let Some(data_val) = data {
@@ -195,9 +195,9 @@ impl DualBootBlockdevice for DualbootBlkstuff {
         return -1;
     }
 
-    fn _generate_json(&self) -> crate::blueprint::Storage {
+    fn _generate_json(&self, start: u64, end: u64) -> crate::blueprint::Storage {
         let ctx = TeaPartitionGenerator::new(self.selected_blockdev.clone());
-        let (start, end) = ctx.find_empty_space_sector_area(); // search for empty space
+        // let (start, end) = ctx.find_empty_space_sector_area(); // search for empty space
         let check_disk_layout = self.parted_partition_structure(); // found!, 
 
         let highest_disk = self.get_highest_partition_number(&check_disk_layout);
@@ -218,6 +218,7 @@ impl DualBootBlockdevice for DualbootBlkstuff {
                 start,
                 end,
                 size: end - start,
+                label: None
             }
         );
 
@@ -229,26 +230,29 @@ impl DualBootBlockdevice for DualbootBlkstuff {
             layout_changed: false,
             autogenerated: true,
             autogenerated_mode: "doubleboot".to_string(),
-            partitions: Some(partition_data)
+            partitions: Some(partition_data),
+            install_method: MethodKind::DUAL
         }
         // Storage::default()
     }
 
-    fn getresult(&self) -> Result<crate::blueprint::Storage, String> {
+
+    fn getresult(&self, start: u64, end: u64) -> Result<crate::blueprint::Storage, String> {
         let check = self._check();
 
         match check {
             Ok(check_val) => {
                 println!("{:#?}", check_val);
-                let check2 = self._disk_check_requirements();
-                match check2 {
-                    Ok(check2_val) => {
-                        Ok(self._generate_json())
-                    },
-                    Err(e) => {
-                        Err(e)
-                    }
-                }
+                // let check2 = self._disk_check_requirements();
+                // match check2 {
+                //     Ok(check2_val) => {
+                        
+                //     },
+                //     Err(e) => {
+                //         Err(e)
+                //     }
+                // }
+                Ok(self._generate_json(start, end))
             }
             Err(e) => {
                 let buf = format!("generation failed: {}", e);
