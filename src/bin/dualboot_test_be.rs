@@ -6,7 +6,7 @@ use tea_partition_generator::mkpart::Partgen;
 async fn main() {
     let ctx: DualbootBlkstuff = DualBootBlockdevice::blockdevice(
         "/dev/sdb".to_string(), 
-        "btrfs".to_string() 
+        "btrfs".to_string()
     );
 
     // this number come from FE, use find_empty_space_sector_areav
