@@ -193,7 +193,6 @@ impl SingleBootBlockdevice for Blkstuff {
                     start: 2048, // aligment
                     end: 2048 + mb2sector(512, current_sector),
                     size: mb2sector(512, current_sector),
-                    label: None,
                 });
                 counter = counter + 1;
 
@@ -230,7 +229,6 @@ impl SingleBootBlockdevice for Blkstuff {
                     start: last_sector + 1,
                     end: current_size_sector.unwrap() - 2048,
                     size: current_size_sector.unwrap() - last_sector - 2048,
-                    label: None,
                 });
             } else {
                 disks_export.push(Partition {
@@ -244,7 +242,6 @@ impl SingleBootBlockdevice for Blkstuff {
                     start: 2048, // aligment
                     end: current_size_sector.unwrap() - 2048,
                     size: current_size_sector.unwrap() - 2048,
-                    label: None,
                 });
             }
 
