@@ -1,14 +1,13 @@
 // this file is executed when user want Erase disk & clean install
-use duct::cmd;
-use std::{clone, str::FromStr};
-use serde::{Deserialize, Serialize};
-use crate::blueprint::{Partition, Storage, Bootloader}; 
-use crate::exception;
+use crate::blueprint::{Bootloader, Partition, Storage};
 use crate::disk_helper::{gb2sector, mb2sector};
+use crate::{config, exception};
+use duct::cmd;
+use serde::{Deserialize, Serialize};
+use std::{clone, str::FromStr};
 use tea_arch_chroot_lib::resource::MethodKind;
 
-
-// karna di mode ini, user minta single boot & clean install hdd, maka kita butuh 2 struct 
+// karna di mode ini, user minta single boot & clean install hdd, maka kita butuh 2 struct
 // karna seantero disk, partition table, dll semua diubah
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -38,11 +37,9 @@ pub struct BlockDeviceData {
     pub firstlba: Option<u64>,
     pub lastlba: Option<u64>,
     // end gpt spesific field
-
     pub sectorsize: u64,
     pub partitions: Option<Vec<Partitions>>,
 }
-
 
 // this is sfdisk --json output
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -55,12 +52,12 @@ pub struct Blkstuff {
     pub selected_blockdev: String,
     pub selected_fs: String,
     pub selected_partition_table: String,
-    pub partitiontable: PartitionTable
+    pub partitiontable: PartitionTable,
+    pub use_swap: bool,
 }
 
-
 pub trait SingleBootBlockdevice {
-    fn blockdevice(blkname: String, fs: String, partition_table: String) -> Self;
+    fn blockdevice(blkname: String, fs: String, partition_table: String, use_swap: bool) -> Self;
     fn get_blkinfo(blkname: &String) -> Result<PartitionTable, String>;
     fn getblkbytes(&self) -> Option<u64>;
     fn getblksector(&self) -> Option<u64>;
@@ -71,7 +68,7 @@ pub trait SingleBootBlockdevice {
 }
 
 impl SingleBootBlockdevice for Blkstuff {
-    fn blockdevice(blkname: String, fs: String, partition_table: String) -> Self {
+    fn blockdevice(blkname: String, fs: String, partition_table: String, use_swap: bool) -> Self {
         let _blkdata: PartitionTable = Self::get_blkinfo(&blkname).unwrap_or_else(|e| {
             eprintln!("ERROR!!!!!!: {}", e);
             PartitionTable {
@@ -92,7 +89,8 @@ impl SingleBootBlockdevice for Blkstuff {
             selected_blockdev: blkname,
             selected_fs: fs,
             selected_partition_table: partition_table,
-            partitiontable: _blkdata
+            partitiontable: _blkdata,
+            use_swap,
         }
     }
 
@@ -172,7 +170,7 @@ impl SingleBootBlockdevice for Blkstuff {
             None => {
                 return Err(Box::new(exception::TealinuxAutoPartitionErr::InternalErr(
                     "something error with getblkbytes()".to_string(),
-                )))
+                )));
             }
         };
 
@@ -180,38 +178,58 @@ impl SingleBootBlockdevice for Blkstuff {
         if current_size.unwrap() > (20 * 1024 * 1024 * 1024) {
             // setup 512 MB for GPT stuff
             // let mut last_sector: u64 = gb2sector(70, self.partitiontable.partitiontable.sectorsize);
-            
+
             if self.selected_partition_table.to_lowercase() == "gpt" {
+                let mut counter = 1;
+
                 disks_export.push(Partition {
                     number: 1,
                     disk_path: Some(self.selected_blockdev.clone()),
-                    path: Some(format!("{}1", self.selected_blockdev.clone())),
+                    path: Some(format!("{}{}", self.selected_blockdev.clone(), counter)),
                     mountpoint: Some("/boot/efi".to_string()),
                     filesystem: Some("fat32".to_string()),
                     format: true,
                     start: 2048, // aligment
                     end: 2048 + mb2sector(512, current_sector),
                     size: mb2sector(512, current_sector),
-                    label: None
+                    label: None,
                 });
-    
+                counter = counter + 1;
+
                 // align + size (prev)
-                let last_sector: u64 =
-                    2048 + mb2sector(512, current_sector);
-    
+                let mut last_sector: u64 = 2048 + mb2sector(512, current_sector);
+
+                if self.use_swap {
+                    disks_export.push(Partition {
+                        number: 2,
+                        disk_path: Some(self.selected_blockdev.clone()),
+                        path: Some(format!("{}{}", self.selected_blockdev.clone(), counter)),
+                        mountpoint: None,
+                        filesystem: Some("linux-swap".to_string()),
+                        format: true,
+                        start: last_sector + 1,
+                        end: last_sector + mb2sector(config::SWAP_SIZE, current_sector),
+                        size: mb2sector(config::SWAP_SIZE, current_sector),
+                        label: None,
+                    });
+
+                    last_sector = last_sector + mb2sector(config::SWAP_SIZE, current_sector);
+                    counter = counter + 1;
+                }
+
                 // this is root partition
                 disks_export.push(Partition {
                     number: 2,
                     disk_path: Some(self.selected_blockdev.clone()),
-                    path: Some(format!("{}2", self.selected_blockdev.clone())),
+                    path: Some(format!("{}{}", self.selected_blockdev.clone(), counter)),
                     mountpoint: Some("/".to_string()), // some exception if BTRFS is used, this is unneed
                     filesystem: Some(self.selected_fs.to_string()),
                     format: true,
                     start: last_sector + 1,
                     end: current_size_sector.unwrap() - 2048,
                     size: current_size_sector.unwrap() - last_sector - 2048,
-                    label: None
-                });    
+                    label: None,
+                });
             } else {
                 disks_export.push(Partition {
                     number: 1,
@@ -223,10 +241,10 @@ impl SingleBootBlockdevice for Blkstuff {
                     start: 2048, // aligment
                     end: current_size_sector.unwrap() - 2048,
                     size: current_size_sector.unwrap() - 2048,
-                    label: None
+                    label: None,
                 });
             }
-            
+
             // disk lower than 20 GB
         } else {
             return Err(Box::new(
@@ -247,7 +265,7 @@ impl SingleBootBlockdevice for Blkstuff {
             autogenerated: true,
             autogenerated_mode: "singleboot".to_string(),
             partitions: Some(disks_export),
-            install_method: MethodKind::SINGLE
+            install_method: MethodKind::SINGLE,
         })
         // return Err(Box::new(
         //     error::TealinuxAutoPartitionErr::InsufficientStorage(
@@ -279,7 +297,7 @@ impl SingleBootBlockdevice for Blkstuff {
         if self.selected_partition_table.to_lowercase() == "mbr" {
             Some(Bootloader {
                 firmware_type: tea_arch_chroot_lib::resource::FirmwareKind::BIOS,
-                path: Some(self.selected_blockdev.clone())
+                path: Some(self.selected_blockdev.clone()),
             })
         } else {
             Some(Bootloader {
