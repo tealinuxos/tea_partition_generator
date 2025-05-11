@@ -11,4 +11,4 @@ regex = "1.11.1"
 serde = { version = "1.0.203", features = ["derive"] }
 serde_json = { version = "1.0.117", features = ["preserve_order"] }
 tokio = { version = "1.38.0", features = ["rt-multi-thread", "macros"] }
-tea-arch-chroot-lib = { git = "https://github.com/tealinuxos/tea-arch-chroot-lib" }
+tea-arch-chroot-lib = { git = "https://github.com/fadhil-riyanto/tea-arch-chroot-lib" }

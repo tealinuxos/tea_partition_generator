@@ -295,7 +295,7 @@ dependencies = [
 [[package]]
 name = "tea-arch-chroot-lib"
 version = "0.1.0"
-source = "git+https://github.com/tealinuxos/tea-arch-chroot-lib#f44a7352a87762a30198fd26257dac61cdca9012"
+source = "git+https://github.com/fadhil-riyanto/tea-arch-chroot-lib#70fc77db592bea9a248a9cc50b547c18c86411e3"
 dependencies = [
  "duct",
  "lazy-regex",
