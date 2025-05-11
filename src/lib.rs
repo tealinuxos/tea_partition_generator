@@ -12,3 +12,4 @@ pub mod blueprint;
 pub mod mkpart;
 
 pub mod mounting;
+pub mod config;
