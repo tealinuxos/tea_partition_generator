@@ -53,7 +53,8 @@ pub struct Partition {
 #[derive(Debug, Clone)]
 pub struct DualbootBlkstuff {
     pub selected_blockdev: String,
-    pub selected_fs: String
+    pub selected_fs: String,
+    pub use_swap: bool
 }
 
 #[derive(Default, Debug)]
@@ -63,7 +64,7 @@ pub struct DiskLayout {
 }
 
 pub trait DualBootBlockdevice {
-    fn blockdevice(blkname: String, fs: String) -> Self;
+    fn blockdevice(blkname: String, fs: String, use_swap: bool) -> Self;
     fn check_base_disk_layout(&self) -> DiskLayout;
     fn parted_partition_structure(&self) -> Option<DiskInfo>;
     fn getresult(&self, start: u64, end: u64) -> Result<Storage, String>;
@@ -74,10 +75,11 @@ pub trait DualBootBlockdevice {
 }
 
 impl DualBootBlockdevice for DualbootBlkstuff {
-    fn blockdevice(blkname: String, fs: String) -> Self {
+    fn blockdevice(blkname: String, fs: String, use_swap: bool) -> Self {
         DualbootBlkstuff {
             selected_blockdev: blkname,
-            selected_fs: fs
+            selected_fs: fs,
+            use_swap
         }
     }
 
@@ -194,18 +196,42 @@ impl DualBootBlockdevice for DualbootBlkstuff {
         return -1;
     }
 
-    fn _generate_json(&self, start: u64, end: u64) -> crate::blueprint::Storage {
+    fn _generate_json(&self, mut start: u64, mut end: u64) -> crate::blueprint::Storage {
         let ctx = TeaPartitionGenerator::new(self.selected_blockdev.clone());
         // let (start, end) = ctx.find_empty_space_sector_area(); // search for empty space
         let check_disk_layout = self.parted_partition_structure(); // found!, 
 
-        let highest_disk = self.get_highest_partition_number(&check_disk_layout);
+        let mut highest_disk = self.get_highest_partition_number(&check_disk_layout);
+        let sector_size = crate::os::Os::get_sector(self.selected_blockdev.clone()).unwrap();
 
-        // println!("{:#?}", check_disk_layout);
         println!("data {}", self.get_highest_partition_number(&check_disk_layout));
-        // let partition_data = 
 
         let mut partition_data: Vec<crate::blueprint::Partition> = Vec::new();
+        if self.use_swap {
+            let sizebytes = (end - start) * 512;
+            let ideal_size = crate::os::Os::decide_swap_size2_bytes(sizebytes).unwrap();
+
+            println!("dualboot swap size: {:#?}", ideal_size);
+
+            partition_data.push(
+                crate::blueprint::Partition {
+                    number: (highest_disk + 1) as u64,       // next
+                    disk_path: Some(self.selected_blockdev.clone()),
+                    path: Some(format!("{}{}", self.selected_blockdev.clone(), highest_disk + 1)),
+                    mountpoint: None,
+                    filesystem: Some("linux-swap".to_string()),
+                    format: true,
+                    start,
+                    end: start + mb2sector(ideal_size, sector_size),
+                    size: mb2sector(ideal_size, sector_size),
+                    label: None
+                }
+            );
+
+            highest_disk = highest_disk + 1;
+            start = start + mb2sector(ideal_size, sector_size) + 1; // next
+        }
+
         partition_data.push(
             crate::blueprint::Partition {
                 number: (highest_disk + 1) as u64,       // next
