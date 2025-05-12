@@ -203,8 +203,8 @@ impl SingleBootBlockdevice for Blkstuff {
                 let mut last_sector: u64 = 2048 + mb2sector(512, current_sector);
 
                 if self.use_swap {
-                    let swap_size = os::Os::decide_swap_size();
-
+                    let swap_size = os::Os::decide_swap_size2(self.selected_blockdev.clone()).unwrap();
+                    
                     disks_export.push(Partition {
                         number: 2,
                         disk_path: Some(self.selected_blockdev.clone()),
