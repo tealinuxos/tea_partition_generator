@@ -10,7 +10,7 @@ fn main() {
         "/dev/sdb".to_string(), 
         "btrfs".to_string(), 
         "gpt".to_string(),
-        false
+        true
     );
 
     let ret = ctx.getresult();

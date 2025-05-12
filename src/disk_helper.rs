@@ -38,3 +38,7 @@ pub fn mb2sector(x: u64, sector_size: u64) -> u64 {
     }
     (x * 1024 * 1024) / sector_size
 }
+
+pub fn bytes2mb(x: u64) -> u64 {
+    return x / 1024 / 1024;
+}
