@@ -44,11 +44,11 @@ impl Partgen {
         let endf = format!("{}s", end);
 
         println!(
-            "Executing parted command: parted {} --script mkpart {} {} {} {}",
-            blktarget, name, fs, startf, endf
+            "Executing parted command: parted {} --script unit s mkpart primary {} {} {}", 
+            blktarget, fs, startf, endf
         );
 
-        let _ = cmd!("parted", blktarget, "--script", "mkpart", "primary", fs, startf, endf).run();
+        let _ = cmd!("parted", blktarget, "--script", "unit", "s", "mkpart", "primary", fs, startf, endf).run();
     }
 
     pub fn mkfs(partition_target: String, fs: String) {
@@ -61,6 +61,9 @@ impl Partgen {
         } else if fs == "ext4" {
             println!("formatting {} as ext4", partition_target);
             let _ = cmd!("mkfs.ext4", "-F", partition_target).run();
+        }else if fs == "linux-swap" {
+            println!("running: mkswap {}", partition_target);
+            let _ = cmd!("mkswap", partition_target).run();
         }
     }
 
