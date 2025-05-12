@@ -1,7 +1,7 @@
 // this file is executed when user want Erase disk & clean install
 use crate::blueprint::{Bootloader, Partition, Storage};
 use crate::disk_helper::{gb2sector, mb2sector};
-use crate::{config, exception};
+use crate::{config, exception, os};
 use duct::cmd;
 use serde::{Deserialize, Serialize};
 use std::{clone, str::FromStr};
@@ -65,6 +65,7 @@ pub trait SingleBootBlockdevice {
     fn gen_current_bootloader(&self) -> Option<Bootloader>;
     fn get_sector(&self, blkname: String) -> Result<u64, String>;
     fn _export_data(&self) -> ();
+    // fn decide_swap_size(&self) -> u64;
 }
 
 impl SingleBootBlockdevice for Blkstuff {
@@ -156,6 +157,8 @@ impl SingleBootBlockdevice for Blkstuff {
         }
     }
 
+    
+
     fn getresult(&self) -> Result<Storage, Box<dyn std::error::Error>> {
         // let Ok(blksize) = self.partitiontable.partitiontable.sectorsize;
         let current_size = self.getblkbytes();
@@ -200,6 +203,8 @@ impl SingleBootBlockdevice for Blkstuff {
                 let mut last_sector: u64 = 2048 + mb2sector(512, current_sector);
 
                 if self.use_swap {
+                    let swap_size = os::Os::decide_swap_size2(self.selected_blockdev.clone()).unwrap();
+                    
                     disks_export.push(Partition {
                         number: 2,
                         disk_path: Some(self.selected_blockdev.clone()),
@@ -208,12 +213,12 @@ impl SingleBootBlockdevice for Blkstuff {
                         filesystem: Some("linux-swap".to_string()),
                         format: true,
                         start: last_sector + 1,
-                        end: last_sector + mb2sector(config::SWAP_SIZE, current_sector),
-                        size: mb2sector(config::SWAP_SIZE, current_sector),
+                        end: last_sector + mb2sector(swap_size, current_sector),
+                        size: mb2sector(swap_size, current_sector),
                         label: None,
                     });
 
-                    last_sector = last_sector + mb2sector(config::SWAP_SIZE, current_sector);
+                    last_sector = last_sector + mb2sector(swap_size, current_sector);
                     counter = counter + 1;
                 }
 

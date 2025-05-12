@@ -4,6 +4,7 @@ use tea_partition_generator::single_boot_blockdev::{
 };
 
 use tea_partition_generator::blueprint::Partition;
+use tea_partition_generator::mkpart::Partgen;
 
 fn main() {
     let ctx: Blkstuff = SingleBootBlockdevice::blockdevice(
@@ -14,6 +15,12 @@ fn main() {
     );
 
     let ret = ctx.getresult();
-    println!("{:#?}", ret);
+    // println!("{:#?}", ret);
+
+    if let Ok(ret_val) = ret {
+        Partgen::do_dangerous_task_on(
+            ret_val.clone(), ret_val.install_method.clone()
+        );
+    }
 
 }

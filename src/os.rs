@@ -6,6 +6,9 @@ use lazy_regex::regex_captures;
 use serde::Serialize;
 use duct::cmd;
 use serde;
+use sysinfo::{ System, RefreshKind, MemoryRefreshKind };
+use std::str::FromStr;
+use crate::disk_helper;
 
 #[derive(Serialize, std::fmt::Debug)]
 #[serde(rename_all="camelCase")]
@@ -58,6 +61,60 @@ impl Os
         else
         {
             Ok(Some(oses))
+        }
+    }
+
+    pub fn get_total_memory() -> u64 {
+        let sysinfo = System::new_with_specifics(
+            RefreshKind::new().with_memory(MemoryRefreshKind::new().with_ram())
+        );
+
+        sysinfo.total_memory() / 1024000
+    }
+
+    pub fn decide_swap_size() -> u64 {
+        let memory = crate::os::Os::get_total_memory();
+
+        let ideal_size = match memory {
+            m if m < 8192 => m * 2,
+            m if m < 16384 => ((m as f64 * 1.5) as usize).try_into().unwrap(),
+            m if m < 32768 => m,
+            m if m >= 32768 => m / 2,
+            _ => memory,
+        };
+
+        ideal_size
+        
+    }
+
+    pub fn decide_swap_size2(device: String) -> Option<u64> {
+        let memory = crate::os::Os::get_total_memory();
+    
+        let ideal_size = match memory {
+            m if m < 8192 => m * 2,
+            m if m < 16384 => ((m as f64 * 1.5) as usize).try_into().unwrap(),
+            m if m < 32768 => m,
+            m if m >= 32768 => m / 2,
+            _ => memory,
+        };
+    
+        let data = cmd!("blockdev", "--getsize64", device).read();
+        // println!("{:#?}", data);
+    
+        if let Ok(data_val) = data {
+            let ret = u64::from_str(&data_val).unwrap();
+            let ret_mb = disk_helper::bytes2mb(ret) as f64;
+            let mem_upper_limit = (ret_mb as f64)  * (32.0 / 100.0);
+    
+            if ideal_size as f64 > mem_upper_limit {
+                // println!("max swap : {}", mem_upper_limit);
+                Some(mem_upper_limit as u64)
+            } else {
+                // println!("max swap : {}", ideal_size);
+                Some(ideal_size as u64)
+            }
+        } else {
+            None
         }
     }
 }
