@@ -261,7 +261,7 @@ impl SingleBootBlockdevice for Blkstuff {
                 disks_export.push(Partition {
                     number: counter,
                     disk_path: Some(self.selected_blockdev.clone()),
-                    path: Some(format!("{}1", self.selected_blockdev.clone())),
+                    path: Some(format!("{}{}", self.selected_blockdev.clone(), counter)),
                     mountpoint: Some("/".to_string()),
                     filesystem: Some(self.selected_fs.to_string()),
                     label: None,
