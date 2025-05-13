@@ -182,11 +182,11 @@ impl SingleBootBlockdevice for Blkstuff {
             // setup 512 MB for GPT stuff
             // let mut last_sector: u64 = gb2sector(70, self.partitiontable.partitiontable.sectorsize);
 
+            let mut counter = 1;
             if self.selected_partition_table.to_lowercase() == "gpt" {
-                let mut counter = 1;
 
                 disks_export.push(Partition {
-                    number: 1,
+                    number: counter,
                     disk_path: Some(self.selected_blockdev.clone()),
                     path: Some(format!("{}{}", self.selected_blockdev.clone(), counter)),
                     mountpoint: Some("/boot/efi".to_string()),
@@ -206,7 +206,7 @@ impl SingleBootBlockdevice for Blkstuff {
                     let swap_size = os::Os::decide_swap_size2(self.selected_blockdev.clone()).unwrap();
                     
                     disks_export.push(Partition {
-                        number: 2,
+                        number: counter,
                         disk_path: Some(self.selected_blockdev.clone()),
                         path: Some(format!("{}{}", self.selected_blockdev.clone(), counter)),
                         mountpoint: None,
@@ -224,7 +224,7 @@ impl SingleBootBlockdevice for Blkstuff {
 
                 // this is root partition
                 disks_export.push(Partition {
-                    number: 2,
+                    number: counter,
                     disk_path: Some(self.selected_blockdev.clone()),
                     path: Some(format!("{}{}", self.selected_blockdev.clone(), counter)),
                     mountpoint: Some("/".to_string()), // some exception if BTRFS is used, this is unneed
@@ -236,17 +236,39 @@ impl SingleBootBlockdevice for Blkstuff {
                     size: current_size_sector.unwrap() - last_sector - 2048,
                 });
             } else {
+                let mut last_sector: u64 = 2048;
+
+                if self.use_swap {
+                    let swap_size = os::Os::decide_swap_size2(self.selected_blockdev.clone()).unwrap();
+                    
+                    disks_export.push(Partition {
+                        number: counter,
+                        disk_path: Some(self.selected_blockdev.clone()),
+                        path: Some(format!("{}{}", self.selected_blockdev.clone(), counter)),
+                        mountpoint: None,
+                        filesystem: Some("linux-swap".to_string()),
+                        format: true,
+                        start: last_sector + 1,
+                        end: last_sector + mb2sector(swap_size, current_sector),
+                        size: mb2sector(swap_size, current_sector),
+                        label: None,
+                    });
+
+                    last_sector = last_sector + mb2sector(swap_size, current_sector);
+                    counter = counter + 1;
+                }
+
                 disks_export.push(Partition {
-                    number: 1,
+                    number: counter,
                     disk_path: Some(self.selected_blockdev.clone()),
                     path: Some(format!("{}1", self.selected_blockdev.clone())),
                     mountpoint: Some("/".to_string()),
                     filesystem: Some(self.selected_fs.to_string()),
                     label: None,
                     format: true,
-                    start: 2048, // aligment
+                    start: last_sector + 1, // aligment
                     end: current_size_sector.unwrap() - 2048,
-                    size: current_size_sector.unwrap() - 2048,
+                    size: current_size_sector.unwrap() - (last_sector + 1),
                 });
             }
 
