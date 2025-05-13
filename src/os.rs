@@ -137,4 +137,17 @@ impl Os {
             Err("blockdev getss failed".to_string())
         }
     }
+
+    pub fn get_disk_model(data: String) -> Result<String, String> {
+        let lsblkout = cmd!("lsblk", data, "-J", "-o", "NAME,MODEL").read();
+
+        if let Ok(lsblkout_val) = lsblkout {
+            let v: serde_json::Value = serde_json::from_str(&lsblkout_val).unwrap();
+
+            return Ok(v["blockdevices"][0]["model"].as_str().unwrap().to_string());
+        }
+
+        Err("get_disk_model: call lsblk fail".to_string())
+
+    }
 }
