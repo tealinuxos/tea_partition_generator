@@ -9,6 +9,10 @@ use serde::Serialize;
 use std::error;
 use std::str::FromStr;
 use sysinfo::{MemoryRefreshKind, RefreshKind, System};
+use crate::blueprint::Storage;
+
+use std::fs::File;
+use std::io::Write;
 
 #[derive(Serialize, std::fmt::Debug)]
 #[serde(rename_all = "camelCase")]
@@ -149,5 +153,38 @@ impl Os {
 
         Err("get_disk_model: call lsblk fail".to_string())
 
+    }
+
+    fn __append_swap_fstab(data: &Storage) -> Option<String>{
+        if let Some(partitions_val) = &data.partitions {
+            for partition_i in partitions_val {
+                if partition_i.filesystem == Some("linux-swap".to_string()) {
+                    let fstab_str = format!("{} none swap sw 0 0", partition_i.disk_path.clone().unwrap());
+
+                    return Some(fstab_str);
+                }
+            }
+            return None;
+        } else {
+            return None;
+        }
+    }
+
+    pub fn append_swap_fstab(data: &Storage) -> () {
+        let fstab_ret = Self::__append_swap_fstab(data);
+
+        if let Some(fstab_val) = fstab_ret {
+            println!("appending: {}", fstab_val.clone());
+
+            let mut fd = File::options().append(true).open("/etc/fstab");
+
+            if let Ok(mut fd_val) = fd {
+                writeln!(&mut fd_val, "{}", fstab_val.clone().as_str());
+            } else {
+                println!("something wrong with file descriptor during appending swap fstab!");
+            }
+        } else {
+            println!("appending failed");
+        }
     }
 }
