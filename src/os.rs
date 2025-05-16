@@ -170,7 +170,7 @@ impl Os {
         }
     }
 
-    pub fn append_swap_fstab(data: &Storage) -> () {
+    pub fn append_swap_fstab(data: &Storage) -> Result<(), String> {
         let fstab_ret = Self::__append_swap_fstab(data);
 
         if let Some(fstab_val) = fstab_ret {
@@ -181,10 +181,12 @@ impl Os {
             if let Ok(mut fd_val) = fd {
                 writeln!(&mut fd_val, "{}", fstab_val.clone().as_str());
             } else {
-                println!("something wrong with file descriptor during appending swap fstab!");
+                return Err("something wrong with file descriptor during appending swap fstab!".to_string());
             }
         } else {
-            println!("appending failed");
+            return Err("appending fstab swap failed".to_string());
         }
+
+        Ok(())
     }
 }
