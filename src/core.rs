@@ -1,3 +1,4 @@
+use crate::config;
 use crate::os;
 use async_trait::async_trait;
 use serde_json::{Error, Result};
@@ -57,6 +58,7 @@ impl TeaPartitionGenerator {
 }
 
 pub trait PartitionGenerator {
+    fn new(selected: String) -> TeaPartitionGenerator;
     fn has_other_os(&self) -> bool;
     fn disk_list_other_os() -> Option<Vec<OsOnDisk>>;
     fn find_empty_space_sector_area(&self) -> (u64, u64);
@@ -64,6 +66,12 @@ pub trait PartitionGenerator {
 }
 
 impl PartitionGenerator for TeaPartitionGenerator {
+    fn new(selected: String) -> TeaPartitionGenerator {
+        TeaPartitionGenerator {
+            selected
+        }
+    }
+
     fn has_other_os(&self) -> bool {
         let ret = os::Os::get_other_os();
 
@@ -99,7 +107,7 @@ impl PartitionGenerator for TeaPartitionGenerator {
 
             for parted_data_i in &ret.data {
                 // NOTE: Tunning this number
-                if ((ret.info.sector_size_logical as u64) * parted_data_i.size) > 7516192768 && parted_data_i.fs == "free" {
+                if ((ret.info.sector_size_logical as u64) * parted_data_i.size) > (config::MINIMUM_DISK_SIZE * 1024 * 1024 * 1024) && parted_data_i.fs == "free" {
                     return (parted_data_i.start, parted_data_i.end)
                 }
             }
