@@ -11,15 +11,21 @@ fn main() {
         "/dev/sdb".to_string(),
         "ext4".to_string(),
         "mbr".to_string(),
-        true,
+        false,
     );
 
     let ret = ctx.getresult();
     // println!("{:#?}", ret);
+    if let Ok(ret_val) = ret {
+        Partgen::do_dangerous_task_on(
+            ret_val.clone(), ret_val.clone().install_method
+        );
 
-    if let Ok(ret_val) = &ret {
-        let fstab = Os::append_swap_fstab(ret_val);
+        let fstab = Os::append_swap_fstab(&ret_val.clone());
     }
+    // if let Ok(ret_val) = &ret {
+    //     let fstab = Os::append_swap_fstab(ret_val);
+    // }
 
 
 }
