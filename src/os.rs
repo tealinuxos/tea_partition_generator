@@ -176,7 +176,7 @@ impl Os {
         if let Some(fstab_val) = fstab_ret {
             println!("appending: {}", fstab_val.clone());
 
-            let mut fd = File::options().append(true).open("/etc/fstab");
+            let mut fd = File::options().append(true).open("/tealinux-mount/etc/fstab");
 
             if let Ok(mut fd_val) = fd {
                 writeln!(&mut fd_val, "{}", fstab_val.clone().as_str());
