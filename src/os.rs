@@ -159,7 +159,7 @@ impl Os {
         if let Some(partitions_val) = &data.partitions {
             for partition_i in partitions_val {
                 if partition_i.filesystem == Some("linux-swap".to_string()) {
-                    let fstab_str = format!("{} none swap sw 0 0", partition_i.disk_path.clone().unwrap());
+                    let fstab_str = format!("{} none swap sw 0 0", partition_i.path.clone().unwrap());
 
                     return Some(fstab_str);
                 }
