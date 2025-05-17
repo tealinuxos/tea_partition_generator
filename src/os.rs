@@ -31,13 +31,15 @@ impl Os {
         let prober = concat!(
             "/dev/sdd1@/efi/Microsoft/Boot/bootmgfw.efi:Windows Boot Manager:Windows:efi\n",
             "/dev/sdb2@/efi/Microsoft/Boot/bootmgfw.efi:Wondows Boot Manager:Windows:efi\n",
-            "/dev/nvme0n1p1@/efi/Microsoft/Boot/bootmgfw.efi:Windows Boot Manager:Windows:efi"
+            "/dev/nvme0n1p1@/efi/Microsoft/Boot/bootmgfw.efi:Windows Boot Manager:Windows:efi\n",
+            "/dev/sda1:Windows 10:Winlost:chain"
         );
 
         let entries: Vec<String> = prober.split("\n").map(|s| s.to_string()).collect();
 
         for entry in entries {
-            let result = regex_captures!(r"(\/dev\/[^\@]+)\@[^:]*:([^:]+)", &entry);
+            // let result = regex_captures!(r"(\/dev\/[^\@]+)\@[^:]*:([^:]+)", &entry);
+            let result = regex_captures!(r"^(\/dev\/[^\s:@]+)(?:@[^:]+)?:([^:]+):", &entry);
 
             if let Some(result) = result {
                 let path = result.1;
