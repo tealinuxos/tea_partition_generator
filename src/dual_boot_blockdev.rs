@@ -4,11 +4,13 @@ use tea_arch_chroot_lib::resource::{FirmwareKind, MethodKind};
 use std::{clone, str::FromStr};
 use serde::{Deserialize, Serialize};
 use crate::blueprint::Storage;
+use crate::blueprint::Bootloader;
 // use crate::blueprint::{Storage, Partition};
 use crate::exception;
 use crate::disk_helper::{gb2sector, mb2sector};
 use std::path::Path;
 use crate::core::{PartitionGenerator, TeaPartitionGenerator};
+use std::fs;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DiskInfo {
@@ -54,7 +56,9 @@ pub struct Partition {
 pub struct DualbootBlkstuff {
     pub selected_blockdev: String,
     pub selected_fs: String,
-    pub use_swap: bool
+    pub use_swap: bool,
+
+    pub _reserved_root_disk_num: i32,
 }
 
 #[derive(Default, Debug)]
@@ -67,11 +71,12 @@ pub trait DualBootBlockdevice {
     fn blockdevice(blkname: String, fs: String, use_swap: bool) -> Self;
     fn check_base_disk_layout(&self) -> DiskLayout;
     fn parted_partition_structure(&self) -> Option<DiskInfo>;
-    fn getresult(&self, start: u64, end: u64) -> Result<Storage, String>;
+    fn getresult(&mut self, start: u64, end: u64) -> Result<Storage, String>;
     fn _check(&self) -> Result<bool, String>;
-    fn _generate_json(&self, start: u64, end: u64) -> Storage;
+    fn _generate_json(&mut self, start: u64, end: u64) -> Storage;
     // fn _disk_check_requirements(&self) -> Result<bool, String>;
     fn get_highest_partition_number(&self, data: &Option<DiskInfo>) -> i32;
+    fn gen_current_bootloader(&self) -> Option<Bootloader>;
 }
 
 impl DualBootBlockdevice for DualbootBlkstuff {
@@ -79,7 +84,32 @@ impl DualBootBlockdevice for DualbootBlkstuff {
         DualbootBlkstuff {
             selected_blockdev: blkname,
             selected_fs: fs,
-            use_swap
+            use_swap,
+            _reserved_root_disk_num: 0
+        }
+    }
+
+    // nb: this func return predicted path, sdb3 might not exists unless you format it.
+    fn gen_current_bootloader(&self) -> Option<Bootloader> {
+        let ret = fs::exists("/sys/firmware/efi");
+
+        
+
+        if let Ok(ret_val) = ret {
+            if ret_val == true {
+                Some(Bootloader {
+                    firmware_type: tea_arch_chroot_lib::resource::FirmwareKind::UEFI,
+                    path: Some(format!("{}{}", self.selected_blockdev.clone(), self._reserved_root_disk_num.clone())),
+                })
+            } else {
+                Some(Bootloader {
+                    firmware_type: tea_arch_chroot_lib::resource::FirmwareKind::BIOS,
+                    path: Some(format!("{}{}", self.selected_blockdev.clone(), self._reserved_root_disk_num.clone())),
+                })
+            }
+            
+        } else {
+            None
         }
     }
 
@@ -196,7 +226,7 @@ impl DualBootBlockdevice for DualbootBlkstuff {
         return -1;
     }
 
-    fn _generate_json(&self, mut start: u64, mut end: u64) -> crate::blueprint::Storage {
+    fn _generate_json(&mut self, mut start: u64, mut end: u64) -> crate::blueprint::Storage {
         let ctx = TeaPartitionGenerator::new(self.selected_blockdev.clone());
         // let (start, end) = ctx.find_empty_space_sector_area(); // search for empty space
         let check_disk_layout = self.parted_partition_structure(); // found!, 
@@ -246,6 +276,8 @@ impl DualBootBlockdevice for DualbootBlkstuff {
                 label: None
             }
         );
+        self._reserved_root_disk_num = highest_disk + 1;
+
 
 
         Storage {
@@ -262,7 +294,7 @@ impl DualBootBlockdevice for DualbootBlkstuff {
     }
 
 
-    fn getresult(&self, start: u64, end: u64) -> Result<crate::blueprint::Storage, String> {
+    fn getresult(&mut self, start: u64, end: u64) -> Result<crate::blueprint::Storage, String> {
         let check = self._check();
 
         match check {

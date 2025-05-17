@@ -17,10 +17,15 @@ async fn main() {
     let partition_generator_ctx = TeaPartitionGenerator::new("/dev/sdb".to_string());
     let (start, end) = partition_generator_ctx.find_empty_space_sector_area();
 
-    let ret = ctx.getresult(start, end);
-    println!("partition design: {:#?}", ret);
-
+    // println!("partition design: {} {}", start, end);
     // return;
+    if start == 0 && end == 0 {
+        println!("no empty partition, aborting!");
+        return;
+    }
+
+    let ret = ctx.getresult(start, end);
+
 
     if let Ok(ret_val) = ret {
         Partgen::do_dangerous_task_on(
