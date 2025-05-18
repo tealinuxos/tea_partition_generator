@@ -104,7 +104,7 @@ impl DualBootBlockdevice for DualbootBlkstuff {
             } else {
                 Some(Bootloader {
                     firmware_type: tea_arch_chroot_lib::resource::FirmwareKind::BIOS,
-                    path: Some(format!("{}{}", self.selected_blockdev.clone(), self._reserved_root_disk_num.clone())),
+                    path: Some(format!("{}", self.selected_blockdev.clone())),
                 })
             }
             
