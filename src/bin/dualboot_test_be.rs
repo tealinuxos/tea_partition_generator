@@ -7,9 +7,9 @@ use tea_partition_generator::core::{PartitionGenerator, TeaPartitionGenerator};
 
 #[tokio::main]
 async fn main() {
-    let ctx: DualbootBlkstuff = DualBootBlockdevice::blockdevice(
+    let mut ctx: DualbootBlkstuff = DualBootBlockdevice::blockdevice(
         "/dev/sdb".to_string(), 
-        "btrfs".to_string(),
+        "ext4".to_string(),
         true
     );
 
@@ -24,15 +24,16 @@ async fn main() {
         return;
     }
 
-    let ret = ctx.getresult(start, end);
+    let mut ret = ctx.getresult(start, end);
 
+    println!("runn {:?}", ret);
 
     if let Ok(ret_val) = ret {
         Partgen::do_dangerous_task_on(
             ret_val.clone(), ret_val.clone().install_method
         );
 
-        let fstab = Os::append_swap_fstab(&ret_val.clone());
+        // let fstab = Os::append_swap_fstab(&ret_val.clone());
     }
 
 

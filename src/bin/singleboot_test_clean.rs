@@ -10,8 +10,8 @@ fn main() {
     let ctx: Blkstuff = SingleBootBlockdevice::blockdevice(
         "/dev/sdb".to_string(), 
         "ext4".to_string(), 
-        "gpt".to_string(),
-        true
+        "mbr".to_string(),
+        false
     );
 
     let ret = ctx.getresult();
