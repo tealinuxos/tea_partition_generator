@@ -1,6 +1,11 @@
 // ref: https://github.com/tealinuxos/tea-arch-chroot-lib/blob/master/src/chroot/os.rs
 // by: Gagah Syuja
 
+use std::fs::{read_to_string, write};
+use std::io::{self, Write};
+use std::path::Path;
+
+use crate::blueprint::Storage;
 use crate::disk_helper;
 use duct::cmd;
 use lazy_regex::regex_captures;
@@ -9,10 +14,8 @@ use serde::Serialize;
 use std::error;
 use std::str::FromStr;
 use sysinfo::{MemoryRefreshKind, RefreshKind, System};
-use crate::blueprint::Storage;
 
 use std::fs::File;
-use std::io::Write;
 
 #[derive(Serialize, std::fmt::Debug)]
 #[serde(rename_all = "camelCase")]
@@ -154,14 +157,14 @@ impl Os {
         }
 
         Err("get_disk_model: call lsblk fail".to_string())
-
     }
 
-    fn __append_swap_fstab(data: &Storage) -> Option<String>{
+    fn __append_swap_fstab(data: &Storage) -> Option<String> {
         if let Some(partitions_val) = &data.partitions {
             for partition_i in partitions_val {
                 if partition_i.filesystem == Some("linux-swap".to_string()) {
-                    let fstab_str = format!("{} none swap sw 0 0", partition_i.path.clone().unwrap());
+                    let fstab_str =
+                        format!("{} none swap sw 0 0", partition_i.path.clone().unwrap());
 
                     return Some(fstab_str);
                 }
@@ -178,17 +181,58 @@ impl Os {
         if let Some(fstab_val) = fstab_ret {
             println!("appending: {}", fstab_val.clone());
 
-            let mut fd = File::options().append(true).open("/tealinux-mount/etc/fstab");
+            let mut fd = File::options()
+                .append(true)
+                .open("/tealinux-mount/etc/fstab");
 
             if let Ok(mut fd_val) = fd {
                 writeln!(&mut fd_val, "{}", fstab_val.clone().as_str());
             } else {
-                return Err("something wrong with file descriptor during appending swap fstab!".to_string());
+                return Err(
+                    "something wrong with file descriptor during appending swap fstab!".to_string(),
+                );
             }
         } else {
             return Err("appending fstab swap failed".to_string());
         }
 
         Ok(())
+    }
+
+    pub fn patch_grub_config_disable_os_probe(val_nostr: bool) {
+        let key = "GRUB_DISABLE_OS_PROBER";
+        let val = format!("{}", val_nostr);
+
+        let path_str = "/tealinux-mount/etc/default/grub";
+
+        let content = read_to_string(path_str);
+
+        if let Ok(content_val) = content {
+            //
+            let mut lines: Vec<String> = content_val.lines().map(|l| l.to_string()).collect();
+            let mut found = false;
+
+            for line in lines.iter_mut() {
+                if line.trim_start().starts_with(&format!("{key}=")) || line.trim_start().starts_with(&format!("#{key}=")) {
+                    *line = format!("{key}={val}");
+                    found = true;
+                    break;
+                }
+            }
+
+            if !found {
+                lines.push(format!("{key}={val}"));
+            }
+
+            // Join lines and write back
+            let new_content = lines.join("\n") + "\n";
+            let _ = write(path_str, new_content);
+        } else {
+            println!("read {} failed, aborted", path_str);
+        }
+    }
+
+    pub fn regenerate_grub() {
+        let _ = cmd!("grub-mkconfig", "-o", "/boot/grub/grub.cfg").run();
     }
 }
