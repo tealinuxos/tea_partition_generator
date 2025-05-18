@@ -108,7 +108,12 @@ impl PartitionGenerator for TeaPartitionGenerator {
             for parted_data_i in &ret.data {
                 // NOTE: Tunning this number
                 if ((ret.info.sector_size_logical as u64) * parted_data_i.size) > (config::MINIMUM_DISK_SIZE * 1024 * 1024 * 1024) && parted_data_i.fs == "free" {
-                    return (parted_data_i.start, parted_data_i.end)
+                    let mut start = parted_data_i.start;
+                    if start < 2048 {
+                        start = 2049; // pad
+                    }
+                    
+                    return (start, parted_data_i.end)
                 }
             }
 
