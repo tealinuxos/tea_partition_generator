@@ -11,6 +11,7 @@ use crate::disk_helper::{gb2sector, mb2sector};
 use std::path::Path;
 use crate::core::{PartitionGenerator, TeaPartitionGenerator};
 use std::fs;
+use crate::os::Os;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DiskInfo {
@@ -237,6 +238,9 @@ impl DualBootBlockdevice for DualbootBlkstuff {
         println!("data {}", self.get_highest_partition_number(&check_disk_layout));
 
         let mut partition_data: Vec<crate::blueprint::Partition> = Vec::new();
+        start = Os::align_2048(start) + 2048; // padding partition before
+        
+
         if self.use_swap {
             let sizebytes = (end - start) * 512;
             let ideal_size = crate::os::Os::decide_swap_size2_bytes(sizebytes).unwrap();
@@ -251,15 +255,15 @@ impl DualBootBlockdevice for DualbootBlkstuff {
                     mountpoint: None,
                     filesystem: Some("linux-swap".to_string()),
                     format: true,
-                    start,
-                    end: start + mb2sector(ideal_size, sector_size),
+                    start: start,
+                    end: Os::align_2048(start + mb2sector(ideal_size, sector_size)),
                     size: mb2sector(ideal_size, sector_size),
                     label: None
                 }
             );
 
             highest_disk = highest_disk + 1;
-            start = start + mb2sector(ideal_size, sector_size) + 1; // next
+            start = Os::align_2048(start + mb2sector(ideal_size, sector_size)) + 2048; // next
         }
 
         partition_data.push(
@@ -270,8 +274,8 @@ impl DualBootBlockdevice for DualbootBlkstuff {
                 mountpoint: Some("/".to_string()),
                 filesystem: Some(self.selected_fs.clone()),
                 format: true,
-                start,
-                end,
+                start: Os::align_2048(start),
+                end: Os::align_2048(end) - 2048,
                 size: end - start,
                 label: None
             }
