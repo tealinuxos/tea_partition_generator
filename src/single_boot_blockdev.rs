@@ -193,14 +193,14 @@ impl SingleBootBlockdevice for Blkstuff {
                     filesystem: Some("fat32".to_string()),
                     label: None,
                     format: true,
-                    start: 2048, // aligment
-                    end: 2048 + mb2sector(512, current_sector),
-                    size: mb2sector(512, current_sector),
+                    start: 4096, // aligment
+                    end: os::Os::align_2048(4096 + mb2sector(512, current_sector)),
+                    size: os::Os::align_2048(4096 + mb2sector(512, current_sector)),
                 });
                 counter = counter + 1;
 
                 // align + size (prev)
-                let mut last_sector: u64 = 2048 + mb2sector(512, current_sector);
+                let mut last_sector: u64 = os::Os::align_2048(4096 + mb2sector(512, current_sector));
 
                 if self.use_swap {
                     let swap_size = os::Os::decide_swap_size2(self.selected_blockdev.clone()).unwrap();
@@ -212,13 +212,13 @@ impl SingleBootBlockdevice for Blkstuff {
                         mountpoint: None,
                         filesystem: Some("linux-swap".to_string()),
                         format: true,
-                        start: last_sector + 1,
-                        end: last_sector + mb2sector(swap_size, current_sector),
+                        start: os::Os::align_2048(last_sector + 1),
+                        end: os::Os::align_2048(last_sector + mb2sector(swap_size, current_sector)),
                         size: mb2sector(swap_size, current_sector),
                         label: None,
                     });
 
-                    last_sector = last_sector + mb2sector(swap_size, current_sector);
+                    last_sector = os::Os::align_2048(last_sector + mb2sector(swap_size, current_sector));
                     counter = counter + 1;
                 }
 
@@ -231,8 +231,8 @@ impl SingleBootBlockdevice for Blkstuff {
                     filesystem: Some(self.selected_fs.to_string()),
                     label: None,
                     format: true,
-                    start: last_sector + 1,
-                    end: current_size_sector.unwrap() - 2048,
+                    start: os::Os::align_2048(last_sector + 1),
+                    end: os::Os::align_2048(current_size_sector.unwrap() - 2048),
                     size: current_size_sector.unwrap() - last_sector - 2048,
                 });
             } else {
@@ -248,13 +248,13 @@ impl SingleBootBlockdevice for Blkstuff {
                         mountpoint: None,
                         filesystem: Some("linux-swap".to_string()),
                         format: true,
-                        start: last_sector + 1,
-                        end: last_sector + mb2sector(swap_size, current_sector),
+                        start: os::Os::align_2048(last_sector + 1),
+                        end: os::Os::align_2048(last_sector + mb2sector(swap_size, current_sector)),
                         size: mb2sector(swap_size, current_sector),
                         label: None,
                     });
 
-                    last_sector = last_sector + mb2sector(swap_size, current_sector);
+                    last_sector = os::Os::align_2048(last_sector + mb2sector(swap_size, current_sector));
                     counter = counter + 1;
                 }
 
@@ -266,9 +266,9 @@ impl SingleBootBlockdevice for Blkstuff {
                     filesystem: Some(self.selected_fs.to_string()),
                     label: None,
                     format: true,
-                    start: last_sector + 1, // aligment
-                    end: current_size_sector.unwrap() - 2048,
-                    size: current_size_sector.unwrap() - (last_sector + 1),
+                    start: os::Os::align_2048(last_sector + 1), // aligment
+                    end: os::Os::align_2048(current_size_sector.unwrap() - 2048),
+                    size: os::Os::align_2048(current_size_sector.unwrap() - 2048) - (last_sector + 1),
                 });
             }
 

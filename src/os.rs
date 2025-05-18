@@ -235,4 +235,9 @@ impl Os {
     pub fn regenerate_grub() {
         let _ = cmd!("grub-mkconfig", "-o", "/boot/grub/grub.cfg").run();
     }
+
+    pub fn align_2048(value: u64) -> u64 {
+        let alignment: u64 = 2048;
+        (value + alignment - 1) & !(alignment - 1)
+    }
 }
