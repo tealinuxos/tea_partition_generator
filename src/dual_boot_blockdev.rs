@@ -10,7 +10,7 @@ use std::path::Path;
 use crate::core::TeaPartitionGenerator;
 use std::fs;
 use crate::os::Os;
-// use tea_partition_generator::os::{DiskPredictor, StateDiskPredictor};
+use crate::os::{StateDiskPredictor, DiskPredictor};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DiskInfo {
@@ -228,10 +228,9 @@ impl DualBootBlockdevice for DualbootBlkstuff {
 
     fn _generate_json(&mut self, mut start: u64, end: u64) -> crate::blueprint::Storage {
         // for predict next number of /dev/sdX
-        // let mut disk_predictor: StateDiskPredictor = DiskPredictor::new(
-        //     self.selected_blockdev.clone(), 
-        //     "gpt".to_string()
-        // );
+        let mut disk_predictor_val = StateDiskPredictor::new(
+            "/dev/sdb".to_string()
+        ).unwrap();
 
         // this is maybe unused
         let _ctx = TeaPartitionGenerator::new(self.selected_blockdev.clone());
@@ -245,6 +244,8 @@ impl DualBootBlockdevice for DualbootBlkstuff {
 
         let mut partition_data: Vec<crate::blueprint::Partition> = Vec::new();
         start = Os::align_2048(start) + 2048; // padding partition before
+
+        let mut next_usable_disks = disk_predictor_val.predict_next_disks_num();
         
 
         if self.use_swap {
@@ -253,11 +254,13 @@ impl DualBootBlockdevice for DualbootBlkstuff {
 
             println!("dualboot swap size: {:#?}", ideal_size);
 
+            // hidden danger, this will crash if MBR partition is 3, then we trying to allocate more partition for swap, which total is 5
+
             partition_data.push(
                 crate::blueprint::Partition {
-                    number: (highest_disk + 1) as u64,       // next
+                    number: (next_usable_disks.unwrap()) as u64,       // next
                     disk_path: Some(self.selected_blockdev.clone()),
-                    path: Some(format!("{}{}", self.selected_blockdev.clone(), highest_disk + 1)),
+                    path: Some(format!("{}{}", self.selected_blockdev.clone(), next_usable_disks.unwrap())),
                     mountpoint: None,
                     filesystem: Some("linux-swap".to_string()),
                     format: true,
@@ -268,15 +271,19 @@ impl DualBootBlockdevice for DualbootBlkstuff {
                 }
             );
 
+            disk_predictor_val.mark(next_usable_disks.unwrap());
             highest_disk = highest_disk + 1;
             start = Os::align_2048(start + mb2sector(ideal_size, sector_size)) + 2048; // next
         }
 
+        // create new one
+        next_usable_disks = disk_predictor_val.predict_next_disks_num();
+
         partition_data.push(
             crate::blueprint::Partition {
-                number: (highest_disk + 1) as u64,       // next
+                number: (next_usable_disks.unwrap()) as u64,       // next
                 disk_path: Some(self.selected_blockdev.clone()),
-                path: Some(format!("{}{}", self.selected_blockdev.clone(), highest_disk + 1)),
+                path: Some(format!("{}{}", self.selected_blockdev.clone(), next_usable_disks.unwrap())),
                 mountpoint: Some("/".to_string()),
                 filesystem: Some(self.selected_fs.clone()),
                 format: true,
@@ -287,8 +294,7 @@ impl DualBootBlockdevice for DualbootBlkstuff {
             }
         );
         self._reserved_root_disk_num = highest_disk + 1;
-
-
+        disk_predictor_val.mark(next_usable_disks.unwrap());
 
         Storage {
             disk_path: Some(self.selected_blockdev.clone()),
