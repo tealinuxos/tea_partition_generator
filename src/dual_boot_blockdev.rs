@@ -229,7 +229,7 @@ impl DualBootBlockdevice for DualbootBlkstuff {
     fn _generate_json(&mut self, mut start: u64, end: u64) -> crate::blueprint::Storage {
         // for predict next number of /dev/sdX
         let mut disk_predictor_val = StateDiskPredictor::new(
-            "/dev/sdb".to_string()
+            self.selected_blockdev.clone()
         ).unwrap();
 
         // this is maybe unused
