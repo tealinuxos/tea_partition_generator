@@ -19,6 +19,20 @@ use tea_arch_chroot_lib::resource::MethodKind;
 use std::fs;
 use std::fs::File;
 
+use serde::Deserialize;
+use std::process::Command;
+
+#[derive(Debug, Deserialize)]
+struct LsblkOutput {
+    blockdevices: Vec<BlockDevice>,
+}
+
+#[derive(Debug, Deserialize)]
+struct BlockDevice {
+    name: String,
+    pttype: Option<String>,
+}
+
 #[derive(Serialize, std::fmt::Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Os {
@@ -27,6 +41,36 @@ pub struct Os {
 }
 
 impl Os {
+    pub fn detect_partition_table(disk: &str) -> Option<String> {
+        let output = Command::new("lsblk")
+            .args(&["-J", "-o", "NAME,PTTYPE", disk])
+            .output()
+            .expect("failed to run lsblk");
+
+        if !output.status.success() {
+            eprintln!("lsblk error: {:?}", String::from_utf8_lossy(&output.stderr));
+            return None;
+        }
+
+        let json = String::from_utf8_lossy(&output.stdout);
+        let parsed: LsblkOutput = serde_json::from_str(&json).ok()?;
+
+        let disk_name = disk.strip_prefix("/dev/").unwrap_or(disk);
+        for dev in parsed.blockdevices {
+            if dev.name == disk_name {
+                if let Some(ptable) = dev.pttype {
+                    if ptable == "dos" {
+                        return Some("mbr".to_string());
+                    } else {
+                        return Some(ptable);
+                    }
+                }
+            }
+        }
+
+        None
+    }
+
     pub fn get_other_os() -> Result<Option<Vec<Self>>, Box<dyn error::Error>> {
         let mut oses: Vec<Self> = Vec::new();
 
@@ -260,7 +304,7 @@ pub struct StateDiskPredictor {
 }
 
 pub trait DiskPredictor {
-    fn new(disk: String, mode: String) -> Self;
+    fn new(disk: String) -> Result<StateDiskPredictor, String>;
     fn predict_next_disk(&mut self) -> Option<u32>;
     fn mark(&mut self, disk_num: u32);
 
@@ -271,31 +315,38 @@ pub trait DiskPredictor {
 }
 
 impl DiskPredictor for StateDiskPredictor {
-    fn new(disk: String, mode: String) -> Self {
+    fn new(disk: String) -> Result<StateDiskPredictor, String> {
         let mut buf: Vec<_InternalDiskNum> = Vec::new();
 
-        if mode.to_lowercase() == "mbr" {
-            // buf = (1..=4).collect();
-            buf = (1..=4)
-                .map(|n| _InternalDiskNum {
-                    partition: n,
-                    mark: false,
-                })
-                .collect()
-        } else {
-            // buf = (1..=128).collect();
-            buf = (1..=128)
-                .map(|n| _InternalDiskNum {
-                    partition: n,
-                    mark: false,
-                })
-                .collect()
-        }
+        let mode = Os::detect_partition_table(&disk);
 
-        StateDiskPredictor {
-            disk: disk,
-            firmware_mode: mode,
-            slot: buf,
+        if let Some(mode_val) = mode {
+            if mode_val.to_lowercase() == "mbr" {
+                // buf = (1..=4).collect();
+                buf = (1..=4)
+                    .map(|n| _InternalDiskNum {
+                        partition: n,
+                        mark: false,
+                    })
+                    .collect()
+            } else {
+                // buf = (1..=128).collect();
+                buf = (1..=128)
+                    .map(|n| _InternalDiskNum {
+                        partition: n,
+                        mark: false,
+                    })
+                    .collect()
+            }
+    
+            return Ok(StateDiskPredictor {
+                disk: disk,
+                firmware_mode: mode_val,
+                slot: buf,
+            });
+        } else {
+            println!("Failed to get mode, disk is not either MBR or GPT");
+            return Err("Failed to get mode, disk is not either MBR or GPT".to_string());
         }
     }
 
@@ -361,6 +412,3 @@ impl DiskPredictor for StateDiskPredictor {
         println!("{:?}", Self::get_disk_num_array(self.disk.clone()));
     }
 }
-
-
-
