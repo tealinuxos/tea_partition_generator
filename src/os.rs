@@ -14,7 +14,9 @@ use serde::Serialize;
 use std::error;
 use std::str::FromStr;
 use sysinfo::{MemoryRefreshKind, RefreshKind, System};
+use tea_arch_chroot_lib::resource::MethodKind;
 
+use std::fs;
 use std::fs::File;
 
 #[derive(Serialize, std::fmt::Debug)]
@@ -213,7 +215,9 @@ impl Os {
             let mut found = false;
 
             for line in lines.iter_mut() {
-                if line.trim_start().starts_with(&format!("{key}=")) || line.trim_start().starts_with(&format!("#{key}=")) {
+                if line.trim_start().starts_with(&format!("{key}="))
+                    || line.trim_start().starts_with(&format!("#{key}="))
+                {
                     *line = format!("{key}={val}");
                     found = true;
                     break;
@@ -240,4 +244,130 @@ impl Os {
         let alignment: u64 = 2048;
         (value + alignment - 1) & !(alignment - 1)
     }
+}
+
+#[derive(Debug, Clone)]
+struct _InternalDiskNum {
+    partition: u32,
+    mark: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct StateDiskPredictor {
+    disk: String,
+    firmware_mode: String,
+    slot: Vec<_InternalDiskNum>,
+}
+
+pub trait DiskPredictor {
+    fn new(disk: String, mode: String) -> Self;
+    fn predict_next_disk(&mut self) -> u32;
+    fn mark(&mut self, disk_num: u32) ;
+
+    fn get_disk_num_array(device: String) -> Result<Vec<u32>, String>;
+    fn predict_next_disks_num(&mut self) -> u32;
+
+    fn _debug(&mut self);
+}
+
+impl DiskPredictor for StateDiskPredictor {
+    fn new(disk: String, mode: String) -> Self {
+        let mut buf: Vec<_InternalDiskNum> = Vec::new();
+        
+        if mode.to_lowercase() == "mbr" {
+            // buf = (1..=4).collect();
+            buf = (1..=4).map(|n| _InternalDiskNum {
+                partition: n,
+                mark: false,
+            }).collect()
+        } else {
+            // buf = (1..=128).collect();
+            buf = (1..=128).map(|n| _InternalDiskNum {
+                partition: n,
+                mark: false,
+            }).collect()
+        }
+
+        StateDiskPredictor {
+            disk: disk,
+            firmware_mode: mode,
+            slot: buf,
+        }
+    }
+
+    fn predict_next_disk(&mut self) -> u32 {
+        self.predict_next_disks_num()
+    }
+
+    fn mark(&mut self, disk_num: u32)  {
+        for x in &mut self.slot {
+            if x.partition == disk_num {
+                x.mark = true;
+            }
+        }
+    }
+
+    fn get_disk_num_array(device: String) -> Result<Vec<u32>, String> {
+        let data = cmd!("parted", device, "-j", "--script", "print").read();
+
+        if let Ok(data_val) = data {
+            let parted_json: serde_json::Result<serde_json::Value> =
+                serde_json::from_str(&data_val);
+
+            if let Ok(parted_json_val) = parted_json {
+                // let buf: Vec<u32> = Vec::new();
+
+                // for x in parted_json_val["disk"]["partitions"] {
+                //     buf.push(x["number"])
+                // }
+
+                let numbers: Vec<u32> = parted_json_val["disk"]["partitions"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .filter_map(|p| p["number"].as_u64().map(|n| n as u32))
+                    .collect();
+
+                // println!("{:?}", numbers);
+                // return Err("ok".to_string());
+                Ok(numbers)
+            } else {
+                return Err("get_disk_num_array parsing json failed".to_string());
+            }
+        } else {
+            return Err("get_disk_num_array call parted failed".to_string());
+        }
+    }
+
+    fn predict_next_disks_num(&mut self) -> u32 {
+        let ret = fs::exists("/sys/firmware/efi");
+
+        if let Ok(ret_val) = ret {
+            let partnum = Self::get_disk_num_array(self.disk.clone());
+
+            if ret_val == true {
+                // this is efi
+                return 0;
+            } else {
+                // this is mbr
+                if let Ok(partnum_val) = partnum {
+                    for x in &self.slot {
+                        if !partnum_val.contains(&x.partition) && x.mark == false{
+                            return x.partition;
+                        }
+                    }
+                }
+                return 0;
+            }
+        } else {
+            println!("something error during detecting next disks");
+            return 0;
+        }
+    }
+
+    fn _debug(&mut self) {
+        println!("{:?}", self)
+    }
+    
+    
 }
