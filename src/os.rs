@@ -261,11 +261,11 @@ pub struct StateDiskPredictor {
 
 pub trait DiskPredictor {
     fn new(disk: String, mode: String) -> Self;
-    fn predict_next_disk(&mut self) -> u32;
-    fn mark(&mut self, disk_num: u32) ;
+    fn predict_next_disk(&mut self) -> Option<u32>;
+    fn mark(&mut self, disk_num: u32);
 
     fn get_disk_num_array(device: String) -> Result<Vec<u32>, String>;
-    fn predict_next_disks_num(&mut self) -> u32;
+    fn predict_next_disks_num(&mut self) -> Option<u32>;
 
     fn _debug(&mut self);
 }
@@ -273,19 +273,23 @@ pub trait DiskPredictor {
 impl DiskPredictor for StateDiskPredictor {
     fn new(disk: String, mode: String) -> Self {
         let mut buf: Vec<_InternalDiskNum> = Vec::new();
-        
+
         if mode.to_lowercase() == "mbr" {
             // buf = (1..=4).collect();
-            buf = (1..=4).map(|n| _InternalDiskNum {
-                partition: n,
-                mark: false,
-            }).collect()
+            buf = (1..=4)
+                .map(|n| _InternalDiskNum {
+                    partition: n,
+                    mark: false,
+                })
+                .collect()
         } else {
             // buf = (1..=128).collect();
-            buf = (1..=128).map(|n| _InternalDiskNum {
-                partition: n,
-                mark: false,
-            }).collect()
+            buf = (1..=128)
+                .map(|n| _InternalDiskNum {
+                    partition: n,
+                    mark: false,
+                })
+                .collect()
         }
 
         StateDiskPredictor {
@@ -295,11 +299,11 @@ impl DiskPredictor for StateDiskPredictor {
         }
     }
 
-    fn predict_next_disk(&mut self) -> u32 {
+    fn predict_next_disk(&mut self) -> Option<u32> {
         self.predict_next_disks_num()
     }
 
-    fn mark(&mut self, disk_num: u32)  {
+    fn mark(&mut self, disk_num: u32) {
         for x in &mut self.slot {
             if x.partition == disk_num {
                 x.mark = true;
@@ -339,35 +343,24 @@ impl DiskPredictor for StateDiskPredictor {
         }
     }
 
-    fn predict_next_disks_num(&mut self) -> u32 {
-        let ret = fs::exists("/sys/firmware/efi");
+    fn predict_next_disks_num(&mut self) -> Option<u32> {
+        let partnum = Self::get_disk_num_array(self.disk.clone());
 
-        if let Ok(ret_val) = ret {
-            let partnum = Self::get_disk_num_array(self.disk.clone());
-
-            if ret_val == true {
-                // this is efi
-                return 0;
-            } else {
-                // this is mbr
-                if let Ok(partnum_val) = partnum {
-                    for x in &self.slot {
-                        if !partnum_val.contains(&x.partition) && x.mark == false{
-                            return x.partition;
-                        }
-                    }
+        if let Ok(partnum_val) = partnum {
+            for x in &self.slot {
+                if !partnum_val.contains(&x.partition) && x.mark == false {
+                    return Some(x.partition);
                 }
-                return 0;
             }
-        } else {
-            println!("something error during detecting next disks");
-            return 0;
         }
+        return None;
     }
 
     fn _debug(&mut self) {
-        println!("{:?}", self)
+        println!("{:?}", self);
+        println!("{:?}", Self::get_disk_num_array(self.disk.clone()));
     }
-    
-    
 }
+
+
+
