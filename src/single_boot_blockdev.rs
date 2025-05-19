@@ -1,10 +1,10 @@
 // this file is executed when user want Erase disk & clean install
 use crate::blueprint::{Bootloader, Partition, Storage};
-use crate::disk_helper::{gb2sector, mb2sector};
-use crate::{config, exception, os};
+use crate::disk_helper::{mb2sector};
+use crate::{exception, os};
 use duct::cmd;
 use serde::{Deserialize, Serialize};
-use std::{clone, str::FromStr};
+use std::str::FromStr;
 use tea_arch_chroot_lib::resource::MethodKind;
 
 // karna di mode ini, user minta single boot & clean install hdd, maka kita butuh 2 struct

@@ -1,7 +1,5 @@
 use crate::config;
 use crate::os;
-use async_trait::async_trait;
-use serde_json::{Error, Result};
 use crate::disk_helper;
 use crate::parted_parser;
 use duct::cmd;

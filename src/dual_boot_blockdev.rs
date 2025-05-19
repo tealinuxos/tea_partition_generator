@@ -1,17 +1,16 @@
 // this file is executed when user want Erase disk & clean install
 use duct::cmd;
 use tea_arch_chroot_lib::resource::{FirmwareKind, MethodKind};
-use std::{clone, str::FromStr};
 use serde::{Deserialize, Serialize};
 use crate::blueprint::Storage;
 use crate::blueprint::Bootloader;
 // use crate::blueprint::{Storage, Partition};
-use crate::exception;
-use crate::disk_helper::{gb2sector, mb2sector};
+use crate::disk_helper::mb2sector;
 use std::path::Path;
-use crate::core::{PartitionGenerator, TeaPartitionGenerator};
+use crate::core::TeaPartitionGenerator;
 use std::fs;
 use crate::os::Os;
+// use tea_partition_generator::os::{DiskPredictor, StateDiskPredictor};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DiskInfo {
@@ -227,8 +226,15 @@ impl DualBootBlockdevice for DualbootBlkstuff {
         return -1;
     }
 
-    fn _generate_json(&mut self, mut start: u64, mut end: u64) -> crate::blueprint::Storage {
-        let ctx = TeaPartitionGenerator::new(self.selected_blockdev.clone());
+    fn _generate_json(&mut self, mut start: u64, end: u64) -> crate::blueprint::Storage {
+        // for predict next number of /dev/sdX
+        // let mut disk_predictor: StateDiskPredictor = DiskPredictor::new(
+        //     self.selected_blockdev.clone(), 
+        //     "gpt".to_string()
+        // );
+
+        // this is maybe unused
+        let _ctx = TeaPartitionGenerator::new(self.selected_blockdev.clone());
         // let (start, end) = ctx.find_empty_space_sector_area(); // search for empty space
         let check_disk_layout = self.parted_partition_structure(); // found!, 
 

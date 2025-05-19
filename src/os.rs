@@ -2,8 +2,7 @@
 // by: Gagah Syuja
 
 use std::fs::{read_to_string, write};
-use std::io::{self, Write};
-use std::path::Path;
+use std::io::{Write};
 
 use crate::blueprint::Storage;
 use crate::disk_helper;
@@ -14,9 +13,7 @@ use serde::Serialize;
 use std::error;
 use std::str::FromStr;
 use sysinfo::{MemoryRefreshKind, RefreshKind, System};
-use tea_arch_chroot_lib::resource::MethodKind;
 
-use std::fs;
 use std::fs::File;
 
 use serde::Deserialize;
@@ -227,12 +224,12 @@ impl Os {
         if let Some(fstab_val) = fstab_ret {
             println!("appending: {}", fstab_val.clone());
 
-            let mut fd = File::options()
+            let fd = File::options()
                 .append(true)
                 .open("/tealinux-mount/etc/fstab");
 
             if let Ok(mut fd_val) = fd {
-                writeln!(&mut fd_val, "{}", fstab_val.clone().as_str());
+                let _ = writeln!(&mut fd_val, "{}", fstab_val.clone().as_str());
             } else {
                 return Err(
                     "something wrong with file descriptor during appending swap fstab!".to_string(),
@@ -299,7 +296,6 @@ struct _InternalDiskNum {
 #[derive(Debug, Clone)]
 pub struct StateDiskPredictor {
     disk: String,
-    firmware_mode: String,
     slot: Vec<_InternalDiskNum>,
 }
 
@@ -314,16 +310,20 @@ pub trait DiskPredictor {
     fn _debug(&mut self);
 }
 
+
 impl DiskPredictor for StateDiskPredictor {
+
     fn new(disk: String) -> Result<StateDiskPredictor, String> {
-        let mut buf: Vec<_InternalDiskNum> = Vec::new();
-
+        
         let mode = Os::detect_partition_table(&disk);
-
+        
         if let Some(mode_val) = mode {
+
+            
+            let mut _buf: Vec<_InternalDiskNum> = Vec::new();
             if mode_val.to_lowercase() == "mbr" {
                 // buf = (1..=4).collect();
-                buf = (1..=4)
+                _buf = (1..=4)
                     .map(|n| _InternalDiskNum {
                         partition: n,
                         mark: false,
@@ -331,7 +331,7 @@ impl DiskPredictor for StateDiskPredictor {
                     .collect()
             } else {
                 // buf = (1..=128).collect();
-                buf = (1..=128)
+                _buf = (1..=128)
                     .map(|n| _InternalDiskNum {
                         partition: n,
                         mark: false,
@@ -341,8 +341,7 @@ impl DiskPredictor for StateDiskPredictor {
     
             return Ok(StateDiskPredictor {
                 disk: disk,
-                firmware_mode: mode_val,
-                slot: buf,
+                slot: _buf,
             });
         } else {
             println!("Failed to get mode, disk is not either MBR or GPT");
