@@ -9,9 +9,9 @@ use tea_partition_generator::mkpart::Partgen;
 fn main() {
     let ctx: Blkstuff = SingleBootBlockdevice::blockdevice(
         "/dev/sdb".to_string(), 
-        "btrfs".to_string(), 
-        "gpt".to_string(),
-        true
+        "ext4".to_string(), 
+        "mbr".to_string(),
+        false
     );
 
     let ret = ctx.getresult();

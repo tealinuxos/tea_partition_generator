@@ -12,6 +12,7 @@ pub struct MountPoint {
 pub trait Mount {
     fn new(data: Storage) -> Self;
     fn mount_all(&self);
+    fn run_mount_for(blockdev: String, mount_location: String, options: Option<Vec<&str>>) -> Result<(), Error>;
 }
 
 impl MountPoint {
@@ -36,6 +37,8 @@ impl MountPoint {
                 None
             }
         };
+
+        println!("mount debug: {:?}", options);
 
         if options.is_none() {
             cmd!("mount", partition_path, mountpoint).run()?;
@@ -136,9 +139,7 @@ impl Mount for MountPoint {
                         if let Some(path_data) = &partitions_val_i.path {
                             let _ = Self::mount(path_data, &local_mount.clone(), None);
                         }
-                    }
-
-                    if data == "/" {
+                    } else if data == "/" {
                         let local_mount = Self::_gen_mountpoint_strformat(data.clone());
                         println!("running mkdir --parent {}", local_mount);
                         Self::mkdir_force(local_mount.clone());
@@ -150,12 +151,18 @@ impl Mount for MountPoint {
                         if partitions_val_i.filesystem.as_deref() == Some("ext4") {
                             Self::_handle_ext4_mount(&partitions_val_i);
                         }
-
+                    } else {
+                        println!("no mount")
                     }
 
 
                 }
             }
         }
+    }
+
+    fn run_mount_for(blockdev: String, mount_location: String, options: Option<Vec<&str>>) -> Result<(), Error> {
+        Self::mkdir_force(mount_location.clone());
+        Self::mount(&blockdev, &mount_location.clone(), options)
     }
 }

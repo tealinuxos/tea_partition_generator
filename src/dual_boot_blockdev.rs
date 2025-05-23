@@ -1,14 +1,16 @@
 // this file is executed when user want Erase disk & clean install
 use duct::cmd;
 use tea_arch_chroot_lib::resource::{FirmwareKind, MethodKind};
-use std::{clone, str::FromStr};
 use serde::{Deserialize, Serialize};
 use crate::blueprint::Storage;
+use crate::blueprint::Bootloader;
 // use crate::blueprint::{Storage, Partition};
-use crate::exception;
-use crate::disk_helper::{gb2sector, mb2sector};
+use crate::disk_helper::mb2sector;
 use std::path::Path;
-use crate::core::{PartitionGenerator, TeaPartitionGenerator};
+use crate::core::TeaPartitionGenerator;
+use std::fs;
+use crate::os::Os;
+use crate::os::{StateDiskPredictor, DiskPredictor};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DiskInfo {
@@ -54,7 +56,9 @@ pub struct Partition {
 pub struct DualbootBlkstuff {
     pub selected_blockdev: String,
     pub selected_fs: String,
-    pub use_swap: bool
+    pub use_swap: bool,
+
+    pub _reserved_root_disk_num: i32,
 }
 
 #[derive(Default, Debug)]
@@ -67,11 +71,12 @@ pub trait DualBootBlockdevice {
     fn blockdevice(blkname: String, fs: String, use_swap: bool) -> Self;
     fn check_base_disk_layout(&self) -> DiskLayout;
     fn parted_partition_structure(&self) -> Option<DiskInfo>;
-    fn getresult(&self, start: u64, end: u64) -> Result<Storage, String>;
+    fn getresult(&mut self, start: u64, end: u64) -> Result<Storage, String>;
     fn _check(&self) -> Result<bool, String>;
-    fn _generate_json(&self, start: u64, end: u64) -> Storage;
+    fn _generate_json(&mut self, start: u64, end: u64) -> Storage;
     // fn _disk_check_requirements(&self) -> Result<bool, String>;
     fn get_highest_partition_number(&self, data: &Option<DiskInfo>) -> i32;
+    fn gen_current_bootloader(&self) -> Option<Bootloader>;
 }
 
 impl DualBootBlockdevice for DualbootBlkstuff {
@@ -79,7 +84,32 @@ impl DualBootBlockdevice for DualbootBlkstuff {
         DualbootBlkstuff {
             selected_blockdev: blkname,
             selected_fs: fs,
-            use_swap
+            use_swap,
+            _reserved_root_disk_num: 0
+        }
+    }
+
+    // nb: this func return predicted path, sdb3 might not exists unless you format it.
+    fn gen_current_bootloader(&self) -> Option<Bootloader> {
+        let ret = fs::exists("/sys/firmware/efi");
+
+        
+
+        if let Ok(ret_val) = ret {
+            if ret_val == true {
+                Some(Bootloader {
+                    firmware_type: tea_arch_chroot_lib::resource::FirmwareKind::UEFI,
+                    path: Some(format!("{}{}", self.selected_blockdev.clone(), self._reserved_root_disk_num.clone())),
+                })
+            } else {
+                Some(Bootloader {
+                    firmware_type: tea_arch_chroot_lib::resource::FirmwareKind::BIOS,
+                    path: Some(format!("{}", self.selected_blockdev.clone())),
+                })
+            }
+            
+        } else {
+            None
         }
     }
 
@@ -196,8 +226,14 @@ impl DualBootBlockdevice for DualbootBlkstuff {
         return -1;
     }
 
-    fn _generate_json(&self, mut start: u64, mut end: u64) -> crate::blueprint::Storage {
-        let ctx = TeaPartitionGenerator::new(self.selected_blockdev.clone());
+    fn _generate_json(&mut self, mut start: u64, end: u64) -> crate::blueprint::Storage {
+        // for predict next number of /dev/sdX
+        let mut disk_predictor_val = StateDiskPredictor::new(
+            self.selected_blockdev.clone()
+        ).unwrap();
+
+        // this is maybe unused
+        let _ctx = TeaPartitionGenerator::new(self.selected_blockdev.clone());
         // let (start, end) = ctx.find_empty_space_sector_area(); // search for empty space
         let check_disk_layout = self.parted_partition_structure(); // found!, 
 
@@ -207,46 +243,58 @@ impl DualBootBlockdevice for DualbootBlkstuff {
         println!("data {}", self.get_highest_partition_number(&check_disk_layout));
 
         let mut partition_data: Vec<crate::blueprint::Partition> = Vec::new();
+        start = Os::align_2048(start) + 2048; // padding partition before
+
+        let mut next_usable_disks = disk_predictor_val.predict_next_disks_num();
+        
+
         if self.use_swap {
             let sizebytes = (end - start) * 512;
             let ideal_size = crate::os::Os::decide_swap_size2_bytes(sizebytes).unwrap();
 
             println!("dualboot swap size: {:#?}", ideal_size);
 
+            // hidden danger, this will crash if MBR partition is 3, then we trying to allocate more partition for swap, which total is 5
+
             partition_data.push(
                 crate::blueprint::Partition {
-                    number: (highest_disk + 1) as u64,       // next
+                    number: (next_usable_disks.unwrap()) as u64,       // next
                     disk_path: Some(self.selected_blockdev.clone()),
-                    path: Some(format!("{}{}", self.selected_blockdev.clone(), highest_disk + 1)),
+                    path: Some(format!("{}{}", self.selected_blockdev.clone(), next_usable_disks.unwrap())),
                     mountpoint: None,
                     filesystem: Some("linux-swap".to_string()),
                     format: true,
-                    start,
-                    end: start + mb2sector(ideal_size, sector_size),
+                    start: start,
+                    end: Os::align_2048(start + mb2sector(ideal_size, sector_size)),
                     size: mb2sector(ideal_size, sector_size),
                     label: None
                 }
             );
 
+            disk_predictor_val.mark(next_usable_disks.unwrap());
             highest_disk = highest_disk + 1;
-            start = start + mb2sector(ideal_size, sector_size) + 1; // next
+            start = Os::align_2048(start + mb2sector(ideal_size, sector_size)) + 2048; // next
         }
+
+        // create new one
+        next_usable_disks = disk_predictor_val.predict_next_disks_num();
 
         partition_data.push(
             crate::blueprint::Partition {
-                number: (highest_disk + 1) as u64,       // next
+                number: (next_usable_disks.unwrap()) as u64,       // next
                 disk_path: Some(self.selected_blockdev.clone()),
-                path: Some(format!("{}{}", self.selected_blockdev.clone(), highest_disk + 1)),
+                path: Some(format!("{}{}", self.selected_blockdev.clone(), next_usable_disks.unwrap())),
                 mountpoint: Some("/".to_string()),
                 filesystem: Some(self.selected_fs.clone()),
                 format: true,
-                start,
-                end,
+                start: Os::align_2048(start),
+                end: Os::align_2048(end) - 2048,
                 size: end - start,
                 label: None
             }
         );
-
+        self._reserved_root_disk_num = highest_disk + 1;
+        disk_predictor_val.mark(next_usable_disks.unwrap());
 
         Storage {
             disk_path: Some(self.selected_blockdev.clone()),
@@ -262,7 +310,7 @@ impl DualBootBlockdevice for DualbootBlkstuff {
     }
 
 
-    fn getresult(&self, start: u64, end: u64) -> Result<crate::blueprint::Storage, String> {
+    fn getresult(&mut self, start: u64, end: u64) -> Result<crate::blueprint::Storage, String> {
         let check = self._check();
 
         match check {

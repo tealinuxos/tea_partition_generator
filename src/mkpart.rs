@@ -1,13 +1,9 @@
 // this is very simple library, the goal is partitioning sdb
 
 // use crate::installer::blueprint::Partition;
-use crate::blueprint::{Partition, Storage};
+use crate::blueprint::Storage;
 use duct::cmd;
-use serde::{Deserialize, Serialize};
-use std::fs::File;
-use std::io::Read;
 use tea_arch_chroot_lib::resource::MethodKind;
-use std::vec::Vec;
 
 // #[derive(Serialize, Deserialize, Debug)]
 // pub struct DiskInfo {
@@ -39,7 +35,7 @@ impl Partgen {
         }
     }
 
-    pub fn mkpart(blktarget: String, start: u64, end: u64, fs: String, name: String) {
+    pub fn mkpart(blktarget: String, start: u64, end: u64, fs: String, _name: String) {
         let startf = format!("{}s", start);
         let endf = format!("{}s", end);
 

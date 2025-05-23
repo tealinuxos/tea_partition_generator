@@ -26,15 +26,7 @@ async fn main() {
 
     let mut ret = ctx.getresult(start, end);
 
-    println!("runn {:?}", ret);
-
-    if let Ok(ret_val) = ret {
-        Partgen::do_dangerous_task_on(
-            ret_val.clone(), ret_val.clone().install_method
-        );
-
-        // let fstab = Os::append_swap_fstab(&ret_val.clone());
-    }
+    println!("runn {:#?}", ret);
 
 
 }

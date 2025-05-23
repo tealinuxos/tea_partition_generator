@@ -1,10 +1,10 @@
 // this file is executed when user want Erase disk & clean install
 use crate::blueprint::{Bootloader, Partition, Storage};
-use crate::disk_helper::{gb2sector, mb2sector};
-use crate::{config, exception, os};
+use crate::disk_helper::{mb2sector};
+use crate::{exception, os};
 use duct::cmd;
 use serde::{Deserialize, Serialize};
-use std::{clone, str::FromStr};
+use std::str::FromStr;
 use tea_arch_chroot_lib::resource::MethodKind;
 
 // karna di mode ini, user minta single boot & clean install hdd, maka kita butuh 2 struct
@@ -185,6 +185,8 @@ impl SingleBootBlockdevice for Blkstuff {
             let mut counter = 1;
             if self.selected_partition_table.to_lowercase() == "gpt" {
 
+                // pad depan + efi size
+                let mut _end_sector = os::Os::align_2048(4096 + mb2sector(512, current_sector)); 
                 disks_export.push(Partition {
                     number: counter,
                     disk_path: Some(self.selected_blockdev.clone()),
@@ -193,14 +195,14 @@ impl SingleBootBlockdevice for Blkstuff {
                     filesystem: Some("fat32".to_string()),
                     label: None,
                     format: true,
-                    start: 2048, // aligment
-                    end: 2048 + mb2sector(512, current_sector),
-                    size: mb2sector(512, current_sector),
+                    start: 4096, // aligment
+                    end: _end_sector,
+                    size: _end_sector - 4096,
                 });
                 counter = counter + 1;
 
                 // align + size (prev)
-                let mut last_sector: u64 = 2048 + mb2sector(512, current_sector);
+                let mut start_sector_again: u64 = _end_sector + 2048; //  end + next pad
 
                 if self.use_swap {
                     let swap_size = os::Os::decide_swap_size2(self.selected_blockdev.clone()).unwrap();
@@ -212,13 +214,13 @@ impl SingleBootBlockdevice for Blkstuff {
                         mountpoint: None,
                         filesystem: Some("linux-swap".to_string()),
                         format: true,
-                        start: last_sector + 1,
-                        end: last_sector + mb2sector(swap_size, current_sector),
+                        start: os::Os::align_2048(start_sector_again),
+                        end: os::Os::align_2048(start_sector_again + mb2sector(swap_size, current_sector)),
                         size: mb2sector(swap_size, current_sector),
                         label: None,
                     });
 
-                    last_sector = last_sector + mb2sector(swap_size, current_sector);
+                    start_sector_again = os::Os::align_2048(start_sector_again + mb2sector(swap_size, current_sector)) + 2048;
                     counter = counter + 1;
                 }
 
@@ -231,12 +233,12 @@ impl SingleBootBlockdevice for Blkstuff {
                     filesystem: Some(self.selected_fs.to_string()),
                     label: None,
                     format: true,
-                    start: last_sector + 1,
+                    start: os::Os::align_2048(start_sector_again),
                     end: current_size_sector.unwrap() - 2048,
-                    size: current_size_sector.unwrap() - last_sector - 2048,
+                    size: current_size_sector.unwrap() - os::Os::align_2048(start_sector_again),
                 });
             } else {
-                let mut last_sector: u64 = 2048;
+                let mut last_sector: u64 = 4096;
 
                 if self.use_swap {
                     let swap_size = os::Os::decide_swap_size2(self.selected_blockdev.clone()).unwrap();
@@ -248,27 +250,27 @@ impl SingleBootBlockdevice for Blkstuff {
                         mountpoint: None,
                         filesystem: Some("linux-swap".to_string()),
                         format: true,
-                        start: last_sector + 1,
-                        end: last_sector + mb2sector(swap_size, current_sector),
+                        start: os::Os::align_2048(last_sector),
+                        end: os::Os::align_2048(last_sector + mb2sector(swap_size, current_sector)),
                         size: mb2sector(swap_size, current_sector),
                         label: None,
                     });
 
-                    last_sector = last_sector + mb2sector(swap_size, current_sector);
+                    last_sector = os::Os::align_2048(last_sector + mb2sector(swap_size, current_sector)) + 2048;
                     counter = counter + 1;
                 }
 
                 disks_export.push(Partition {
                     number: counter,
                     disk_path: Some(self.selected_blockdev.clone()),
-                    path: Some(format!("{}1", self.selected_blockdev.clone())),
+                    path: Some(format!("{}{}", self.selected_blockdev.clone(), counter)),
                     mountpoint: Some("/".to_string()),
                     filesystem: Some(self.selected_fs.to_string()),
                     label: None,
                     format: true,
-                    start: last_sector + 1, // aligment
+                    start: os::Os::align_2048(last_sector), // aligment
                     end: current_size_sector.unwrap() - 2048,
-                    size: current_size_sector.unwrap() - (last_sector + 1),
+                    size: (current_size_sector.unwrap() - 2048) - os::Os::align_2048(last_sector),
                 });
             }
 
