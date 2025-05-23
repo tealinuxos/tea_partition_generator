@@ -12,6 +12,7 @@ pub struct MountPoint {
 pub trait Mount {
     fn new(data: Storage) -> Self;
     fn mount_all(&self);
+    fn run_mount_for(blockdev: String, mount_location: String, options: Option<Vec<&str>>) -> Result<(), Error>;
 }
 
 impl MountPoint {
@@ -158,5 +159,10 @@ impl Mount for MountPoint {
                 }
             }
         }
+    }
+
+    fn run_mount_for(blockdev: String, mount_location: String, options: Option<Vec<&str>>) -> Result<(), Error> {
+        Self::mkdir_force(mount_location.clone());
+        Self::mount(&blockdev, &mount_location.clone(), options)
     }
 }

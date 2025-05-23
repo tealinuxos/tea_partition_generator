@@ -6,6 +6,7 @@ pub mod disk_helper;
 pub mod parted_parser;
 pub mod single_boot_blockdev;
 pub mod dual_boot_blockdev;
+pub mod dual_boot_efi_mount;
 
 pub mod exception;
 pub mod blueprint;

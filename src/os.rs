@@ -285,6 +285,57 @@ impl Os {
         let alignment: u64 = 2048;
         (value + alignment - 1) & !(alignment - 1)
     }
+
+    pub fn get_efi_blockdevice(device: String) -> Result<i64, String> {
+        let data = cmd!("parted", device, "-j", "--script", "print").read();
+
+        if let Ok(data_val) = data {
+            let parted_json: serde_json::Result<serde_json::Value> =
+                serde_json::from_str(&data_val);
+
+            if let Ok(parted_json_val) = parted_json {
+                
+                if let Some(partition_data) = parted_json_val["disk"]["partitions"].as_array() {
+                    for x in partition_data {
+                        // let flags_vector: Vec<String> = x["flags"].as_array().map(|arr| {
+                        //     arr.iter().filter_map(|v| {
+                        //         v.as_str().map(|s| s.to_string())
+                        //     }).collect()
+                        // });
+                        if x["filesystem"] == "fat32" {
+                            if let Some(flags_data) = x["flags"].as_array() {
+                                let flags_transformed = flags_data
+                                    .into_iter()
+                                    .filter_map(|v| 
+                                        v.as_str()
+                                        .map(|s| 
+                                            s.to_string()
+                                        )
+                                    ).collect::<Vec<String>>();
+
+                                if flags_transformed.contains(&"boot".to_string()) && flags_transformed.contains(&"esp".to_string()) {
+                                    return Ok(x["number"].as_i64().unwrap()); // FIXME
+                                }
+                                // println!("{:#?}", flags_transformed.contains(&"espj".to_string()));
+                            }
+                        }
+        
+                            // if x["filesystem"] == "fat32" && x["flags"] == vec!["boot"] {
+                            //     return Ok(x["number"])
+                            // }
+                        }
+                }
+
+                
+
+                return Err("scan not found".to_string());
+            } else {
+                return Err("get_disk_num_array parsing json failed".to_string());
+            }
+        } else {
+            return Err("get_disk_num_array call parted failed".to_string());
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
