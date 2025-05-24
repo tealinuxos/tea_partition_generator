@@ -205,7 +205,7 @@ impl SingleBootBlockdevice for Blkstuff {
                 let mut start_sector_again: u64 = _end_sector + 2048; //  end + next pad
 
                 if self.use_swap {
-                    let swap_size = os::Os::decide_swap_size2(self.selected_blockdev.clone()).unwrap();
+                    let swap_size = os::Os::decide_swap_size3().unwrap();
                     
                     disks_export.push(Partition {
                         number: counter,
@@ -241,7 +241,7 @@ impl SingleBootBlockdevice for Blkstuff {
                 let mut last_sector: u64 = 4096;
 
                 if self.use_swap {
-                    let swap_size = os::Os::decide_swap_size2(self.selected_blockdev.clone()).unwrap();
+                    let swap_size = os::Os::decide_swap_size3().unwrap();
                     
                     disks_export.push(Partition {
                         number: counter,

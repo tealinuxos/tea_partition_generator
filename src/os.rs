@@ -158,6 +158,24 @@ impl Os {
         }
     }
 
+
+    // this func use rule
+    // if less than 2 GiB = ram * 2
+    // if 2 ~ 8 GiB = ram
+    // if larger than 8 GiB = 8
+    pub fn decide_swap_size3() -> Option<u64> {
+        let memory = crate::os::Os::get_total_memory();
+
+        if memory > 8192 {
+            return Some(8192);
+        } else if memory > 2048 && memory < 8192 {
+            return Some(memory);
+        } else {
+            return Some(memory * 2);
+        }
+    }
+
+
     /// this func return mb
     pub fn decide_swap_size2_bytes(bytes_size: u64) -> Option<u64> {
         let memory = crate::os::Os::get_total_memory();

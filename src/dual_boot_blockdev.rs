@@ -250,7 +250,7 @@ impl DualBootBlockdevice for DualbootBlkstuff {
 
         if self.use_swap {
             let sizebytes = (end - start) * 512;
-            let ideal_size = crate::os::Os::decide_swap_size2_bytes(sizebytes).unwrap();
+            let ideal_size = crate::os::Os::decide_swap_size3().unwrap();
 
             println!("dualboot swap size: {:#?}", ideal_size);
 
