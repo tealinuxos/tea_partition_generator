@@ -47,12 +47,12 @@ qemu-system-x86_64 \
 
 ## result
 
-| first_os | secondary_os | boot_mode | type | fs | swap | note |
+| first_os | secondary_os | ptable/boot_mode | type | fs | swap | note |
 |----------|--------------|-----------|------|----|------|------|
-|Windows 10|Tealinux      |mbr        |dual  |ext4|no    |success, but fastboot should be turned off, or BSOD|
-|Windows 10|Tealinux      |mbr        |dual  |ext4|yes   |untested|
-|Windows 10|Tealinux      |mbr        |dual  |btrfs|no   |untested|
-|Windows 10|Tealinux      |mbr        |dual  |btrfs|yes   |untested|
+|Windows 10|Tealinux      |mbr/bios        |dual  |ext4|no    |success, but fastboot should be turned off, or BSOD|
+|Windows 10|Tealinux      |mbr/bios        |dual  |ext4|yes   |untested|
+|Windows 10|Tealinux      |mbr/bios        |dual  |btrfs|no   |success, fastboot disabled|
+|Windows 10|Tealinux      |mbr/bios        |dual  |btrfs|yes   |untested|
 
 # License
 GPL 2.0
