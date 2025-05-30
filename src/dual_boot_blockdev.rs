@@ -47,7 +47,7 @@ pub struct Partition {
     #[serde(rename = "type-id")]
     pub type_id: Option<String>,
     pub uuid: Option<String>,
-    pub filesystem: String,
+    pub filesystem: Option<String>,
     pub flags: Option<Vec<String>>
 }
 

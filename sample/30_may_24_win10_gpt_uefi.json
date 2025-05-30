@@ -1,0 +1,67 @@
+{
+    "disk": {
+       "path": "/dev/sda",
+       "size": "115343360s",
+       "model": "ATA QEMU HARDDISK",
+       "transport": "scsi",
+       "logical-sector-size": 512,
+       "physical-sector-size": 512,
+       "label": "gpt",
+       "uuid": "5c096b1a-f8ee-4cfc-91e0-488a6bf21904",
+       "max-partitions": 128,
+       "partitions": [
+          {
+             "number": 1,
+             "start": "2048s",
+             "end": "206847s",
+             "size": "204800s",
+             "type": "primary",
+             "type-uuid": "c12a7328-f81f-11d2-ba4b-00a0c93ec93b",
+             "uuid": "023f5461-2ad8-4145-a510-0a91289c1744",
+             "name": "EFI system partition",
+             "filesystem": "fat32",
+             "flags": [
+                 "boot", "esp", "no_automount"
+             ]
+          },{
+             "number": 2,
+             "start": "206848s",
+             "end": "239615s",
+             "size": "32768s",
+             "type": "primary",
+             "type-uuid": "e3c9e316-0b5c-4db8-817d-f92df00215ae",
+             "uuid": "af680970-4aca-4817-9031-f395d7c144b8",
+             "name": "Microsoft reserved partition",
+             "flags": [
+                 "msftres", "no_automount"
+             ]
+          },{
+             "number": 3,
+             "start": "239616s",
+             "end": "46686692s",
+             "size": "46447077s",
+             "type": "primary",
+             "type-uuid": "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7",
+             "uuid": "bafb00b5-3e36-4dfc-a67e-306ec556910c",
+             "name": "Basic data partition",
+             "filesystem": "ntfs",
+             "flags": [
+                 "msftdata"
+             ]
+          },{
+             "number": 4,
+             "start": "46688256s",
+             "end": "47757311s",
+             "size": "1069056s",
+             "type": "primary",
+             "type-uuid": "de94bba4-06d1-4d40-a16a-bfd50179d6ac",
+             "uuid": "e8ba3c1a-4ee6-44a8-b8d9-b01dc68e0782",
+             "filesystem": "ntfs",
+             "flags": [
+                 "hidden", "diag", "no_automount"
+             ]
+          }
+       ]
+    }
+ }
+ 
