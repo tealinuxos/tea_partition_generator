@@ -47,18 +47,32 @@ qemu-system-x86_64 \
 
 ## result
 
-| first_os | secondary_os | ptable/boot_mode | type | fs  | swap | note |
-|----------|--------------|------------------|------|-----|------|------|
-|Windows 10|Tealinux      |mbr/bios          |dual  |ext4 |no    |success, but fastboot should be turned off, or BSOD|
-|Windows 10|Tealinux      |mbr/bios          |dual  |ext4 |yes   |untested, no partition left for swap|
-|Windows 10|Tealinux      |mbr/bios          |dual  |btrfs|no    |success, fastboot disabled|
-|Windows 10|Tealinux      |mbr/bios          |dual  |btrfs|yes   |untested, no partition left for swap|
-|Windows 10|Tealinux      |gpt/uefi          |dual  |ext4 |no    |on-progress|
-|Windows 10|Tealinux      |gpt/uefi          |dual  |ext4 |yes   |on-progress|
-|Windows 10|Tealinux      |gpt/uefi          |dual  |btrfs|no    |on-progress|
-|Windows 10|Tealinux      |gpt/uefi          |dual  |btrfs|yes   |on-progress|
-
-
+| date | first_os                | secondary_os | ptable/boot_mode | type | fs  | swap | note |
+|------|-------------------------|--------------|------------------|------|-----|------|------|
+|25 may|Windows 10               |Tealinux      |mbr/bios          |dual  |ext4 |no    |success, but fastboot should be turned off, or BSOD|
+|25 may|Windows 10               |Tealinux      |mbr/bios          |dual  |ext4 |yes   |untested, no partition left for swap|
+|25 may|Windows 10               |Tealinux      |mbr/bios          |dual  |btrfs|no    |success, fastboot disabled|
+|25 may|Windows 10               |Tealinux      |mbr/bios          |dual  |btrfs|yes   |untested, no partition left for swap|
+|30 may|Windows 10               |Tealinux      |gpt/uefi          |dual  |ext4 |no    |tealinux success, but windows somewhat blank white & random line|
+|  -   |Windows 10               |Tealinux      |gpt/uefi          |dual  |ext4 |yes   |on-progress|
+|  -   |Windows 10               |Tealinux      |gpt/uefi          |dual  |btrfs|no    |on-progress|
+|  -   |Windows 10               |Tealinux      |gpt/uefi          |dual  |btrfs|yes   |on-progress|
+|  -   |Archlinux (by calamares) |Tealinux      |mbr/bios          |dual  |ext4 |no    |on-progress|
+|  -   |Archlinux (by calamares) |Tealinux      |mbr/bios          |dual  |ext4 |yes   |on-progress|
+|  -   |Archlinux (by calamares) |Tealinux      |mbr/bios          |dual  |btrfs|no    |on-progress|
+|  -   |Archlinux (by calamares) |Tealinux      |mbr/bios          |dual  |btrfs|yes   |on-progress|
+|  -   |Archlinux (by calamares) |Tealinux      |gpt/uefi          |dual  |ext4 |no    |on-progress|
+|  -   |Archlinux (by calamares) |Tealinux      |gpt/uefi          |dual  |ext4 |yes   |on-progress|
+|  -   |Archlinux (by calamares) |Tealinux      |gpt/uefi          |dual  |btrfs|no    |on-progress|
+|  -   |Archlinux (by calamares) |Tealinux      |gpt/uefi          |dual  |btrfs|yes   |on-progress|
+|  -   |Tealinux                 | -            |mbr/bios          |single|ext4 |no    |need re-tested|
+|  -   |Tealinux                 | -            |mbr/bios          |single|ext4 |yes   |need re-tested|
+|  -   |Tealinux                 | -            |mbr/bios          |single|btrfs|no    |need re-tested|
+|  -   |Tealinux                 | -            |mbr/bios          |single|ext4 |yes   |need re-tested|
+|  -   |Tealinux                 | -            |gpt/uefi          |single|ext4 |no    |need re-tested|
+|  -   |Tealinux                 | -            |gpt/uefi          |single|ext4 |yes   |untested|
+|  -   |Tealinux                 | -            |gpt/uefi          |single|btrfs|no    |need re-tested|
+|  -   |Tealinux                 | -            |gpt/uefi          |single|ext4 |yes   |untested|
 
 # License
 GPL 2.0
