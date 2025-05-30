@@ -47,12 +47,18 @@ qemu-system-x86_64 \
 
 ## result
 
-| first_os | secondary_os | ptable/boot_mode | type | fs | swap | note |
-|----------|--------------|-----------|------|----|------|------|
-|Windows 10|Tealinux      |mbr/bios        |dual  |ext4|no    |success, but fastboot should be turned off, or BSOD|
-|Windows 10|Tealinux      |mbr/bios        |dual  |ext4|yes   |untested|
-|Windows 10|Tealinux      |mbr/bios        |dual  |btrfs|no   |success, fastboot disabled|
-|Windows 10|Tealinux      |mbr/bios        |dual  |btrfs|yes   |untested|
+| first_os | secondary_os | ptable/boot_mode | type | fs  | swap | note |
+|----------|--------------|------------------|------|-----|------|------|
+|Windows 10|Tealinux      |mbr/bios          |dual  |ext4 |no    |success, but fastboot should be turned off, or BSOD|
+|Windows 10|Tealinux      |mbr/bios          |dual  |ext4 |yes   |untested, no partition left for swap|
+|Windows 10|Tealinux      |mbr/bios          |dual  |btrfs|no    |success, fastboot disabled|
+|Windows 10|Tealinux      |mbr/bios          |dual  |btrfs|yes   |untested, no partition left for swap|
+|Windows 10|Tealinux      |gpt/uefi          |dual  |ext4 |no    |on-progress|
+|Windows 10|Tealinux      |gpt/uefi          |dual  |ext4 |yes   |on-progress|
+|Windows 10|Tealinux      |gpt/uefi          |dual  |btrfs|no    |on-progress|
+|Windows 10|Tealinux      |gpt/uefi          |dual  |btrfs|yes   |on-progress|
+
+
 
 # License
 GPL 2.0
