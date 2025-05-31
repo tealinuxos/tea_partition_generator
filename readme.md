@@ -85,14 +85,14 @@ big fat notes: this result tested using QEMU emulator version 10.0.0, not in rea
 |31 may|Archlinux (by calamares) |Tealinux      |gpt/uefi          |dual  |ext4 |yes   |             |all green|
 |31 may|Archlinux (by calamares) |Tealinux      |gpt/uefi          |dual  |btrfs|no    |             |all green|
 |31 may|Archlinux (by calamares) |Tealinux      |gpt/uefi          |dual  |btrfs|yes   |             |all green|
-|  -   |Tealinux                 | -            |mbr/bios          |single|ext4 |no    |             |need re-tested|
-|  -   |Tealinux                 | -            |mbr/bios          |single|ext4 |yes   |             |need re-tested|
-|  -   |Tealinux                 | -            |mbr/bios          |single|btrfs|no    |             |need re-tested|
-|  -   |Tealinux                 | -            |mbr/bios          |single|ext4 |yes   |             |need re-tested|
-|  -   |Tealinux                 | -            |gpt/uefi          |single|ext4 |no    |             |need re-tested|
-|  -   |Tealinux                 | -            |gpt/uefi          |single|ext4 |yes   |             |untested|
-|  -   |Tealinux                 | -            |gpt/uefi          |single|btrfs|no    |             |need re-tested|
-|  -   |Tealinux                 | -            |gpt/uefi          |single|ext4 |yes   |             |untested|
+|31 may|Tealinux                 | -            |mbr/bios          |single|ext4 |no    |             |all green|
+|31 may|Tealinux                 | -            |mbr/bios          |single|ext4 |yes   |             |all green|
+|31 may|Tealinux                 | -            |mbr/bios          |single|btrfs|no    |             |all green|
+|31 may|Tealinux                 | -            |mbr/bios          |single|ext4 |yes   |             |all green|
+|31 may|Tealinux                 | -            |gpt/uefi          |single|ext4 |no    |             |all green|
+|31 may|Tealinux                 | -            |gpt/uefi          |single|ext4 |yes   |             |all green|
+|31 may|Tealinux                 | -            |gpt/uefi          |single|btrfs|no    |             |all green|
+|31 may|Tealinux                 | -            |gpt/uefi          |single|ext4 |yes   |             |all green|
 
 notes:
 sometimes we may remove older uefi vars in order to reset bootloader configuration, but this can be avoided by entering EFI shell, and remove the bootloader using `bcfg boot dump` and `bcfg boot rm X`
