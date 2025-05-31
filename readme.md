@@ -79,8 +79,8 @@ big fat notes: this result tested using QEMU emulator version 10.0.0, not in rea
 |31 may|Windows 10               |Tealinux      |gpt/uefi          |dual  |btrfs|yes   |`-vga virtio`|tealinux failed, windows success, fastboot turned off|
 |31 may|Archlinux (by calamares) |Tealinux      |mbr/bios          |dual  |ext4 |no    |             |all green|
 |31 may|Archlinux (by calamares) |Tealinux      |mbr/bios          |dual  |ext4 |yes   |             |all green|
-|  -   |Archlinux (by calamares) |Tealinux      |mbr/bios          |dual  |btrfs|no    |             |on-progress|
-|  -   |Archlinux (by calamares) |Tealinux      |mbr/bios          |dual  |btrfs|yes   |             |on-progress|
+|  -   |Archlinux (by calamares) |Tealinux      |mbr/bios          |dual  |btrfs|no    |             |all green|
+|  -   |Archlinux (by calamares) |Tealinux      |mbr/bios          |dual  |btrfs|yes   |             |all green|
 |  -   |Archlinux (by calamares) |Tealinux      |gpt/uefi          |dual  |ext4 |no    |             |on-progress|
 |  -   |Archlinux (by calamares) |Tealinux      |gpt/uefi          |dual  |ext4 |yes   |             |on-progress|
 |  -   |Archlinux (by calamares) |Tealinux      |gpt/uefi          |dual  |btrfs|no    |             |on-progress|
