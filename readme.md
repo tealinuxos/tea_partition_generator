@@ -32,7 +32,7 @@ see `config.rs`
 # Test
 
 here qemu test script & result
-## MBR/BIOS
+### MBR/BIOS
 ```sh
 qemu-system-x86_64 \
                       -enable-kvm \
@@ -45,7 +45,7 @@ qemu-system-x86_64 \
                        -net nic
 ```
 
-## GPT/UEFI
+### GPT/UEFI
 ```sh
 qemu-system-x86_64 \
                       -enable-kvm \
@@ -74,8 +74,9 @@ big fat notes: this result tested using QEMU emulator version 10.0.0, not in rea
 |31 may|Windows 10               |Tealinux      |gpt/uefi          |dual  |ext4 |no    |`GDK_BACKEND=x11 -vga virtio -display gtk` |tealinux failed (looping wayland error), windows success, fastboot turned off|
 |31 may|Windows 10               |Tealinux      |gpt/uefi          |dual  |ext4 |yes   |             |tealinux success with swap, windows failed with abstract random line & fastboot turned off|
 |31 may|Windows 10               |Tealinux      |gpt/uefi          |dual  |ext4 |yes   |`-vga virtio`|tealinux failed, windows success, fastboot turned off|
-|  -   |Windows 10               |Tealinux      |gpt/uefi          |dual  |btrfs|no    |             |on-progress|
-|  -   |Windows 10               |Tealinux      |gpt/uefi          |dual  |btrfs|yes   |             |on-progress|
+|31 may|Windows 10               |Tealinux      |gpt/uefi          |dual  |btrfs|no    |             |tealinux btrfs success, windows failed with abstract random line & fastboot turned off|
+|  -   |Windows 10               |Tealinux      |gpt/uefi          |dual  |btrfs|yes   |             |tealinux success with swap, windows failed with abstract random line & fastboot turned off|
+|  -   |Windows 10               |Tealinux      |gpt/uefi          |dual  |btrfs|yes   |`-vga virtio`|tealinux failed, windows success, fastboot turned off|
 |  -   |Archlinux (by calamares) |Tealinux      |mbr/bios          |dual  |ext4 |no    |             |on-progress|
 |  -   |Archlinux (by calamares) |Tealinux      |mbr/bios          |dual  |ext4 |yes   |             |on-progress|
 |  -   |Archlinux (by calamares) |Tealinux      |mbr/bios          |dual  |btrfs|no    |             |on-progress|
