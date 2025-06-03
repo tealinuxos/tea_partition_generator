@@ -25,6 +25,16 @@ pub struct EmptySpace {
     pub end: u64,
 }
 
+#[derive(Debug)]
+pub struct ListsAllSpace {
+    pub index: u32,
+    pub partition_name: String,
+    pub start: u64,
+    pub end: u64,
+    pub size_h: String, // human version for FE
+    pub fs: Option<String>, // FIXME: add enum
+}
+
 impl TeaPartitionGenerator {
     pub fn new(selected: String) -> TeaPartitionGenerator {
         TeaPartitionGenerator { selected }
@@ -61,6 +71,7 @@ pub trait PartitionGenerator {
     fn disk_list_other_os() -> Option<Vec<OsOnDisk>>;
     fn find_empty_space_sector_area(&self) -> (u64, u64);
     fn find_empty_space_sector_areav(&self) -> Vec<EmptySpace>;
+    fn find_partition_sector_areav(&self) -> ();
 }
 
 impl PartitionGenerator for TeaPartitionGenerator {
@@ -152,6 +163,57 @@ impl PartitionGenerator for TeaPartitionGenerator {
         }
 
         buf
+    }
+
+    fn find_partition_sector_areav(&self) -> () {
+        // the disk must be larger than X GiB (see config.rs please)
+
+        let mut buf: Vec<ListsAllSpace> = Vec::new();
+
+        let parted = cmd!("sudo", "parted", "-j", self.selected.clone(), "unit", "s", "print", "free").read();
+
+        if let Ok(parted_val) = parted {
+            let v: serde_json::Value = serde_json::from_str(&parted_val).unwrap();
+            let partition_vec = v["disk"]["partitions"].as_array();
+
+            let n = 0;
+            
+            let disk_name = disk_helper::disk_split_no_dev(v["disk"]["path"].as_str().unwrap().to_string());
+            let sector_size = v["disk"]["physical-sector-size"].as_i64().unwrap() as u64;
+
+            for parted_data_i in partition_vec.unwrap() {
+                // println!("{:#?}", parted_data_i);
+                let trimmed_start = disk_helper::remove_end_s(parted_data_i["start"].as_str().unwrap().to_string());
+                let trimmed_end = disk_helper::remove_end_s(parted_data_i["end"].as_str().unwrap().to_string());
+                
+                let _fs: Option<String> = match parted_data_i["filesystem"].as_str() {
+                    Some(data) => Some(data.to_string()),
+                    Option::None => Some("UNALLOCATED".to_string())
+                };
+
+                let mut _partition_name: String = "Unallocated".to_string();
+                if parted_data_i["number"].as_i64().unwrap() != 0 {
+                    _partition_name = format!("{}{}", disk_name, parted_data_i["number"].as_i64().unwrap());
+                }
+                
+                let _int_start = trimmed_start.parse::<u64>().unwrap();
+                let _int_end = trimmed_end.parse::<u64>().unwrap() as u64;
+
+                buf.push(ListsAllSpace {
+                    index: n,
+                    partition_name: _partition_name,
+                    start: _int_start,
+                    end: _int_end,
+                    // size_h: format!("{}"), // test
+                    size_h: disk_helper::format_size_human((_int_end - _int_start) * sector_size),
+                    fs: _fs
+                })
+            }
+
+            println!("{:#?}", buf);
+
+            return 
+        }
     }
 
     // this func return 
