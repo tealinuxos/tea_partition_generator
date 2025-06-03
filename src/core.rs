@@ -71,7 +71,7 @@ pub trait PartitionGenerator {
     fn disk_list_other_os() -> Option<Vec<OsOnDisk>>;
     fn find_empty_space_sector_area(&self) -> (u64, u64);
     fn find_empty_space_sector_areav(&self) -> Vec<EmptySpace>;
-    fn find_partition_sector_areav(&self) -> ();
+    fn find_partition_sector_areav(&self) -> Vec<ListsAllSpace>;
 }
 
 impl PartitionGenerator for TeaPartitionGenerator {
@@ -165,7 +165,7 @@ impl PartitionGenerator for TeaPartitionGenerator {
         buf
     }
 
-    fn find_partition_sector_areav(&self) -> () {
+    fn find_partition_sector_areav(&self) -> Vec<ListsAllSpace> {
         // the disk must be larger than X GiB (see config.rs please)
 
         let mut buf: Vec<ListsAllSpace> = Vec::new();
@@ -210,9 +210,9 @@ impl PartitionGenerator for TeaPartitionGenerator {
                 })
             }
 
-            println!("{:#?}", buf);
+            // println!("{:#?}", buf);
 
-            return 
+            return buf
         }
     }
 
