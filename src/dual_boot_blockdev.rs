@@ -4,6 +4,7 @@ use tea_arch_chroot_lib::resource::{FirmwareKind, MethodKind};
 use serde::{Deserialize, Serialize};
 use crate::blueprint::Storage;
 use crate::blueprint::Bootloader;
+use crate::blueprint::OriginalSector;
 // use crate::blueprint::{Storage, Partition};
 use crate::disk_helper::mb2sector;
 use std::path::Path;
@@ -297,6 +298,10 @@ impl DualBootBlockdevice for DualbootBlkstuff {
         disk_predictor_val.mark(next_usable_disks.unwrap());
 
         Storage {
+            original_sector: Some(OriginalSector {
+                start: Some(start),
+                end: Some(end),
+            }),
             disk_path: Some(self.selected_blockdev.clone()),
             partition_table: Some(check_disk_layout.unwrap().disk.label.unwrap()),
             new_partition_table: false,

@@ -287,6 +287,7 @@ impl SingleBootBlockdevice for Blkstuff {
         // println!("{:#?}", disks_export);
 
         Ok(Storage {
+            original_sector: None,
             disk_path: Some(self.selected_blockdev.clone()),
             partition_table: Some(self.selected_partition_table.clone()),
             new_partition_table: true,

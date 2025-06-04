@@ -17,9 +17,17 @@ pub struct Partition
     pub size: u64,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct OriginalSector {
+    pub start: Option<u64>,
+    pub end: Option<u64>,
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct Storage
 {
+    pub original_sector: Option<OriginalSector>,
     pub disk_path: Option<String>,
     pub partition_table: Option<String>,
     pub new_partition_table: bool,
