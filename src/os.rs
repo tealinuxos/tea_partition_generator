@@ -358,18 +358,22 @@ impl Os {
     }
 
     pub fn mkdisk_uninitalized(start: u64, end: u64, block_device: String) -> () {
-        let ctx = TeaPartitionGenerator::new(block_device);
+        let ctx = TeaPartitionGenerator::new(block_device.clone());
         let ret = ctx.find_partition_sector_areav();
 
         let mut partnum: i64 = -1;
 
         for ret_i in ret {
-            if ret_i.start == start && ret_i.end == end {
+            if ret_i.start == start && ret_i.end == end && ret_i.partition_num != 0 {
                 partnum = ret_i.partition_num;
             }
         }
 
-        println!("{:#?}", partnum);
+        if partnum != -1 {
+            let _ = cmd!("sudo", "parted", block_device.clone(), "rm", partnum.to_string()).read();
+            println!("WARNING, FORMATTING DISK NUMBER {:#?}", partnum);
+            println!("FORMAT SUCCESFULLY");
+        }
     }
 }
 
