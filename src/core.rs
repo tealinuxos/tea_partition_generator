@@ -29,6 +29,7 @@ pub struct EmptySpace {
 pub struct ListsAllSpace {
     pub index: u32,
     pub partition_name: String,
+    pub partition_num: i64,
     pub start: u64,
     pub end: u64,
     pub size_h: String, // human version for FE
@@ -202,6 +203,7 @@ impl PartitionGenerator for TeaPartitionGenerator {
                 buf.push(ListsAllSpace {
                     index: n,
                     partition_name: _partition_name,
+                    partition_num: parted_data_i["number"].as_i64().unwrap(),
                     start: _int_start,
                     end: _int_end,
                     // size_h: format!("{}"), // test

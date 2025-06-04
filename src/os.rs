@@ -18,6 +18,8 @@ use std::fs::File;
 
 use serde::Deserialize;
 use std::process::Command;
+use crate::core::{PartitionGenerator, TeaPartitionGenerator};
+
 
 #[derive(Debug, Deserialize)]
 struct LsblkOutput {
@@ -353,6 +355,21 @@ impl Os {
         } else {
             return Err("get_disk_num_array call parted failed".to_string());
         }
+    }
+
+    pub fn mkdisk_uninitalized(start: u64, end: u64, block_device: String) -> () {
+        let ctx = TeaPartitionGenerator::new(block_device);
+        let ret = ctx.find_partition_sector_areav();
+
+        let mut partnum: i64 = -1;
+
+        for ret_i in ret {
+            if ret_i.start == start && ret_i.end == end {
+                partnum = ret_i.partition_num;
+            }
+        }
+
+        println!("{:#?}", partnum);
     }
 }
 
