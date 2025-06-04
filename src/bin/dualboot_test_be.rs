@@ -15,7 +15,8 @@ async fn main() {
 
     // this number come from FE, use find_empty_space_sector_areav
     let partition_generator_ctx = TeaPartitionGenerator::new("/dev/sdb".to_string());
-    let (start, end) = partition_generator_ctx.find_empty_space_sector_area();
+    let start = 10899456;
+    let end = 115922943;
 
     // println!("partition design: {} {}", start, end);
     // return;
@@ -26,15 +27,15 @@ async fn main() {
 
     let mut ret = ctx.getresult(start, end);
 
-    println!("runn {:?}", ret);
+    println!("runn {:#?}", ret);
 
-    if let Ok(ret_val) = ret {
-        Partgen::do_dangerous_task_on(
-            ret_val.clone(), ret_val.clone().install_method
-        );
+    // if let Ok(ret_val) = ret {
+    //     Partgen::do_dangerous_task_on(
+    //         ret_val.clone(), ret_val.clone().install_method
+    //     );
 
-        // let fstab = Os::append_swap_fstab(&ret_val.clone());
-    }
+    //     // let fstab = Os::append_swap_fstab(&ret_val.clone());
+    // }
 
 
 }

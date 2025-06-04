@@ -241,6 +241,17 @@ impl DualBootBlockdevice for DualbootBlkstuff {
         // let (start, end) = ctx.find_empty_space_sector_area(); // search for empty space
         let check_disk_layout = self.parted_partition_structure(); // found!, 
 
+        // this func blacklist spesific partition to being calculated by DiskPredictor
+        let virtual_partition_num = Os::is_initialized_disk(
+            saved_start, 
+            saved_end, 
+            self.selected_blockdev.clone()
+        );
+
+        if virtual_partition_num != -1 { // not for unallocated area
+            disk_predictor_val.ignore(virtual_partition_num.try_into().unwrap());
+        }
+
         let mut highest_disk = self.get_highest_partition_number(&check_disk_layout);
         let sector_size = crate::os::Os::get_sector(self.selected_blockdev.clone()).unwrap();
 
