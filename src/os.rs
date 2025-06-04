@@ -357,7 +357,7 @@ impl Os {
         }
     }
 
-    pub fn mkdisk_uninitalized(start: u64, end: u64, block_device: String) -> () {
+    pub fn is_initialized_disk(start: u64, end: u64, block_device: String) -> i64 {
         let ctx = TeaPartitionGenerator::new(block_device.clone());
         let ret = ctx.find_partition_sector_areav();
 
@@ -368,6 +368,12 @@ impl Os {
                 partnum = ret_i.partition_num;
             }
         }
+
+        return partnum;
+    }
+
+    pub fn mkdisk_uninitalized(start: u64, end: u64, block_device: String) -> () {
+        let partnum = Self::is_initialized_disk(start, end, block_device.clone());
 
         if partnum != -1 {
             let _ = cmd!("sudo", "parted", block_device.clone(), "rm", partnum.to_string()).read();
@@ -383,6 +389,7 @@ impl Os {
 struct _InternalDiskNum {
     partition: u32,
     mark: bool,
+    ignore: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -398,6 +405,7 @@ pub trait DiskPredictor {
 
     fn get_disk_num_array(device: String) -> Result<Vec<u32>, String>;
     fn predict_next_disks_num(&mut self) -> Option<u32>;
+    fn ignore(&mut self, disk_num: u32);
 
     fn _debug(&mut self);
 }
@@ -419,6 +427,7 @@ impl DiskPredictor for StateDiskPredictor {
                     .map(|n| _InternalDiskNum {
                         partition: n,
                         mark: false,
+                        ignore: false,
                     })
                     .collect()
             } else {
@@ -427,6 +436,7 @@ impl DiskPredictor for StateDiskPredictor {
                     .map(|n| _InternalDiskNum {
                         partition: n,
                         mark: false,
+                        ignore: false,
                     })
                     .collect()
             }
@@ -449,6 +459,14 @@ impl DiskPredictor for StateDiskPredictor {
         for x in &mut self.slot {
             if x.partition == disk_num {
                 x.mark = true;
+            }
+        }
+    }
+
+    fn ignore(&mut self, disk_num: u32) {
+        for x in &mut self.slot {
+            if x.partition == disk_num {
+                x.ignore = true;
             }
         }
     }
@@ -491,6 +509,10 @@ impl DiskPredictor for StateDiskPredictor {
         if let Ok(partnum_val) = partnum {
             for x in &self.slot {
                 if !partnum_val.contains(&x.partition) && x.mark == false {
+                    return Some(x.partition);
+                }
+
+                if partnum_val.contains(&x.partition) && x.ignore == true && x.mark == false {
                     return Some(x.partition);
                 }
             }
