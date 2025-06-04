@@ -32,7 +32,7 @@ see `config.rs`
 # Test
 
 here qemu test script & result
-## MBR
+### MBR/BIOS
 ```sh
 qemu-system-x86_64 \
                       -enable-kvm \
@@ -45,34 +45,57 @@ qemu-system-x86_64 \
                        -net nic
 ```
 
-## result
+### GPT/UEFI
+```sh
+qemu-system-x86_64 \
+                      -enable-kvm \
+                      -boot order=d \
+                      -drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.4m.fd \
+                      -drive if=pflash,format=raw,file=OVMF_VARS.4m.fd \
+                      -drive file=tealinux.img,format=qcow2 \
+                      -m 4G \
+                      -enable-kvm \
+                      -smp 4 \
+                      -net user,hostfwd=tcp::20022-:22 \
+                      -vga virtio
+```
 
-| date | first_os                | secondary_os | ptable/boot_mode | type | fs  | swap | note |
-|------|-------------------------|--------------|------------------|------|-----|------|------|
-|25 may|Windows 10               |Tealinux      |mbr/bios          |dual  |ext4 |no    |success, but fastboot should be turned off, or BSOD|
-|25 may|Windows 10               |Tealinux      |mbr/bios          |dual  |ext4 |yes   |untested, no partition left for swap|
-|25 may|Windows 10               |Tealinux      |mbr/bios          |dual  |btrfs|no    |success, fastboot disabled|
-|25 may|Windows 10               |Tealinux      |mbr/bios          |dual  |btrfs|yes   |untested, no partition left for swap|
-|30 may|Windows 10               |Tealinux      |gpt/uefi          |dual  |ext4 |no    |tealinux success, but windows somewhat blank white & random line|
-|  -   |Windows 10               |Tealinux      |gpt/uefi          |dual  |ext4 |yes   |on-progress|
-|  -   |Windows 10               |Tealinux      |gpt/uefi          |dual  |btrfs|no    |on-progress|
-|  -   |Windows 10               |Tealinux      |gpt/uefi          |dual  |btrfs|yes   |on-progress|
-|  -   |Archlinux (by calamares) |Tealinux      |mbr/bios          |dual  |ext4 |no    |on-progress|
-|  -   |Archlinux (by calamares) |Tealinux      |mbr/bios          |dual  |ext4 |yes   |on-progress|
-|  -   |Archlinux (by calamares) |Tealinux      |mbr/bios          |dual  |btrfs|no    |on-progress|
-|  -   |Archlinux (by calamares) |Tealinux      |mbr/bios          |dual  |btrfs|yes   |on-progress|
-|  -   |Archlinux (by calamares) |Tealinux      |gpt/uefi          |dual  |ext4 |no    |on-progress|
-|  -   |Archlinux (by calamares) |Tealinux      |gpt/uefi          |dual  |ext4 |yes   |on-progress|
-|  -   |Archlinux (by calamares) |Tealinux      |gpt/uefi          |dual  |btrfs|no    |on-progress|
-|  -   |Archlinux (by calamares) |Tealinux      |gpt/uefi          |dual  |btrfs|yes   |on-progress|
-|  -   |Tealinux                 | -            |mbr/bios          |single|ext4 |no    |need re-tested|
-|  -   |Tealinux                 | -            |mbr/bios          |single|ext4 |yes   |need re-tested|
-|  -   |Tealinux                 | -            |mbr/bios          |single|btrfs|no    |need re-tested|
-|  -   |Tealinux                 | -            |mbr/bios          |single|ext4 |yes   |need re-tested|
-|  -   |Tealinux                 | -            |gpt/uefi          |single|ext4 |no    |need re-tested|
-|  -   |Tealinux                 | -            |gpt/uefi          |single|ext4 |yes   |untested|
-|  -   |Tealinux                 | -            |gpt/uefi          |single|btrfs|no    |need re-tested|
-|  -   |Tealinux                 | -            |gpt/uefi          |single|ext4 |yes   |untested|
+## result
+big fat notes: this result tested using QEMU emulator version 10.0.0, not in real hardware
+
+| date | first_os                | secondary_os | ptable/boot_mode | type | fs  | swap | qemu_params | note |
+|------|-------------------------|--------------|------------------|------|-----|------|-------------|------|
+|25 may|Windows 10               |Tealinux      |mbr/bios          |dual  |ext4 |no    |             |success, windows fastboot turned off|
+|25 may|Windows 10               |Tealinux      |mbr/bios          |dual  |ext4 |yes   |             |untested, no partition left for swap|
+|25 may|Windows 10               |Tealinux      |mbr/bios          |dual  |btrfs|no    |             |success, windows fastboot turned off|
+|25 may|Windows 10               |Tealinux      |mbr/bios          |dual  |btrfs|yes   |             |untested, no partition left for swap|
+|30 may|Windows 10               |Tealinux      |gpt/uefi          |dual  |ext4 |no    |`-vga virtio`|tealinux failed (wayland issue), windows success, fastboot turned off|
+|30 may|Windows 10               |Tealinux      |gpt/uefi          |dual  |ext4 |no    |             |tealinux success, windows failed with abstract random line & fastboot turned off|
+|31 may|Windows 10               |Tealinux      |gpt/uefi          |dual  |ext4 |no    |`GDK_BACKEND=x11 -vga virtio -display gtk` |tealinux failed (looping wayland error), windows success, fastboot turned off|
+|31 may|Windows 10               |Tealinux      |gpt/uefi          |dual  |ext4 |yes   |             |tealinux success with swap, windows failed with abstract random line & fastboot turned off|
+|31 may|Windows 10               |Tealinux      |gpt/uefi          |dual  |ext4 |yes   |`-vga virtio`|tealinux failed, windows success, fastboot turned off|
+|31 may|Windows 10               |Tealinux      |gpt/uefi          |dual  |btrfs|no    |             |tealinux btrfs success, windows failed with abstract random line & fastboot turned off|
+|31 may|Windows 10               |Tealinux      |gpt/uefi          |dual  |btrfs|yes   |             |tealinux success with swap, windows failed with abstract random line & fastboot turned off|
+|31 may|Windows 10               |Tealinux      |gpt/uefi          |dual  |btrfs|yes   |`-vga virtio`|tealinux failed, windows success, fastboot turned off|
+|31 may|Archlinux (by calamares) |Tealinux      |mbr/bios          |dual  |ext4 |no    |             |all green|
+|31 may|Archlinux (by calamares) |Tealinux      |mbr/bios          |dual  |ext4 |yes   |             |all green|
+|31 may|Archlinux (by calamares) |Tealinux      |mbr/bios          |dual  |btrfs|no    |             |all green|
+|31 may|Archlinux (by calamares) |Tealinux      |mbr/bios          |dual  |btrfs|yes   |             |all green|
+|31 may|Archlinux (by calamares) |Tealinux      |gpt/uefi          |dual  |ext4 |no    |             |all green|
+|31 may|Archlinux (by calamares) |Tealinux      |gpt/uefi          |dual  |ext4 |yes   |             |all green|
+|31 may|Archlinux (by calamares) |Tealinux      |gpt/uefi          |dual  |btrfs|no    |             |all green|
+|31 may|Archlinux (by calamares) |Tealinux      |gpt/uefi          |dual  |btrfs|yes   |             |all green|
+|31 may|Tealinux                 | -            |mbr/bios          |single|ext4 |no    |             |all green|
+|31 may|Tealinux                 | -            |mbr/bios          |single|ext4 |yes   |             |all green|
+|31 may|Tealinux                 | -            |mbr/bios          |single|btrfs|no    |             |all green|
+|31 may|Tealinux                 | -            |mbr/bios          |single|ext4 |yes   |             |all green|
+|31 may|Tealinux                 | -            |gpt/uefi          |single|ext4 |no    |             |all green|
+|31 may|Tealinux                 | -            |gpt/uefi          |single|ext4 |yes   |             |all green|
+|31 may|Tealinux                 | -            |gpt/uefi          |single|btrfs|no    |             |all green|
+|31 may|Tealinux                 | -            |gpt/uefi          |single|ext4 |yes   |             |all green|
+
+notes:
+sometimes we may remove older uefi vars in order to reset bootloader configuration, but this can be avoided by entering EFI shell, and remove the bootloader using `bcfg boot dump` and `bcfg boot rm X`
 
 # License
 GPL 2.0
