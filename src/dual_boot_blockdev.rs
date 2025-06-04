@@ -233,6 +233,9 @@ impl DualBootBlockdevice for DualbootBlkstuff {
             self.selected_blockdev.clone()
         ).unwrap();
 
+        let saved_start = start;
+        let saved_end = end;
+
         // this is maybe unused
         let _ctx = TeaPartitionGenerator::new(self.selected_blockdev.clone());
         // let (start, end) = ctx.find_empty_space_sector_area(); // search for empty space
@@ -299,8 +302,8 @@ impl DualBootBlockdevice for DualbootBlkstuff {
 
         Storage {
             original_sector: Some(OriginalSector {
-                start: Some(start),
-                end: Some(end),
+                start: Some(saved_start),
+                end: Some(saved_end),
             }),
             disk_path: Some(self.selected_blockdev.clone()),
             partition_table: Some(check_disk_layout.unwrap().disk.label.unwrap()),

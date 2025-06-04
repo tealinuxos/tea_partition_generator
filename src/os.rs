@@ -373,6 +373,8 @@ impl Os {
             let _ = cmd!("sudo", "parted", block_device.clone(), "rm", partnum.to_string()).read();
             println!("WARNING, FORMATTING DISK NUMBER {:#?}", partnum);
             println!("FORMAT SUCCESFULLY");
+        } else {
+            println!("PARTITION ALREADY UNINITIALIZED, SKIPPING...")
         }
     }
 }
