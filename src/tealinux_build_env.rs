@@ -1,6 +1,6 @@
 use std::env;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum BuildType {
     Production,
     Dev
