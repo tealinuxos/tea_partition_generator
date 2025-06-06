@@ -19,6 +19,7 @@ use std::fs::File;
 use serde::Deserialize;
 use std::process::Command;
 use crate::core::{PartitionGenerator, TeaPartitionGenerator};
+use crate::tealinux_build_env;
 
 
 #[derive(Debug, Deserialize)]
@@ -75,29 +76,55 @@ impl Os {
 
         // let prober = cmd!("os-prober").read()?;
 
-        // For testing purposes
-        let prober = concat!(
-            "/dev/sdd1@/efi/Microsoft/Boot/bootmgfw.efi:Windows Boot Manager:Windows:efi\n",
-            "/dev/sdb2@/efi/Microsoft/Boot/bootmgfw.efi:Wondows Boot Manager:Windows:efi\n",
-            "/dev/nvme0n1p1@/efi/Microsoft/Boot/bootmgfw.efi:Windows Boot Manager:Windows:efi\n",
-            "/dev/sda1:Windows 10:Winlost:chain"
-        );
+        let _build_env = tealinux_build_env::tealinux_build_env();
+        let _build_env_unwrapped = _build_env.unwrap();
 
-        let entries: Vec<String> = prober.split("\n").map(|s| s.to_string()).collect();
+        if _build_env_unwrapped == tealinux_build_env::BuildType::Dev {
+            // deny run start_install on dev env
+            // For testing purposes
+            let prober = concat!(
+                "/dev/sdd1@/efi/Microsoft/Boot/bootmgfw.efi:Windows Boot Manager:Windows:efi\n",
+                "/dev/sdb2@/efi/Microsoft/Boot/bootmgfw.efi:Wondows Boot Manager:Windows:efi\n",
+                "/dev/nvme0n1p1@/efi/Microsoft/Boot/bootmgfw.efi:Windows Boot Manager:Windows:efi\n",
+                "/dev/sda1:Windows 10:Winlost:chain"
+            );
 
-        for entry in entries {
-            // let result = regex_captures!(r"(\/dev\/[^\@]+)\@[^:]*:([^:]+)", &entry);
-            let result = regex_captures!(r"^(\/dev\/[^\s:@]+)(?:@[^:]+)?:([^:]+):", &entry);
+            let entries: Vec<String> = prober.split("\n").map(|s| s.to_string()).collect();
 
-            if let Some(result) = result {
-                let path = result.1;
-                let name = result.2;
+            for entry in entries {
+                // let result = regex_captures!(r"(\/dev\/[^\@]+)\@[^:]*:([^:]+)", &entry);
+                let result = regex_captures!(r"^(\/dev\/[^\s:@]+)(?:@[^:]+)?:([^:]+):", &entry);
 
-                oses.push(Os {
-                    name: name.to_string(),
-                    path: path.to_string(),
-                });
+                if let Some(result) = result {
+                    let path = result.1;
+                    let name = result.2;
+
+                    oses.push(Os {
+                        name: name.to_string(),
+                        path: path.to_string(),
+                    });
+                }
             }
+        } else if _build_env_unwrapped == tealinux_build_env::BuildType::Production {
+            let prober = cmd!("os-prober").read()?;
+            let entries: Vec<String> = prober.split("\n").map(|s| s.to_string()).collect();
+
+            for entry in entries {
+                // let result = regex_captures!(r"(\/dev\/[^\@]+)\@[^:]*:([^:]+)", &entry);
+                let result = regex_captures!(r"^(\/dev\/[^\s:@]+)(?:@[^:]+)?:([^:]+):", &entry);
+
+                if let Some(result) = result {
+                    let path = result.1;
+                    let name = result.2;
+
+                    oses.push(Os {
+                        name: name.to_string(),
+                        path: path.to_string(),
+                    });
+                }
+            }
+        } else {
+
         }
 
         if oses.is_empty() {
