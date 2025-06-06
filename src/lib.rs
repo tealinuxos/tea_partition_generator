@@ -14,3 +14,4 @@ pub mod mkpart;
 
 pub mod mounting;
 pub mod config;
+pub mod tealinux_build_env;
