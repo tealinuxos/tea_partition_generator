@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::blueprint::Storage;
 use crate::blueprint::Bootloader;
 use crate::blueprint::OriginalSector;
+use crate::disk_helper;
 // use crate::blueprint::{Storage, Partition};
 use crate::disk_helper::mb2sector;
 use std::path::Path;
@@ -275,7 +276,8 @@ impl DualBootBlockdevice for DualbootBlkstuff {
                 crate::blueprint::Partition {
                     number: (next_usable_disks.unwrap()) as u64,       // next
                     disk_path: Some(self.selected_blockdev.clone()),
-                    path: Some(format!("{}{}", self.selected_blockdev.clone(), next_usable_disks.unwrap())),
+                    // path: Some(format!("{}{}", self.selected_blockdev.clone(), next_usable_disks.unwrap())),
+                    path: Some(disk_helper::gen_appr_disk_format(self.selected_blockdev.clone(), next_usable_disks.unwrap().into())),
                     mountpoint: None,
                     filesystem: Some("linux-swap".to_string()),
                     format: true,
@@ -298,7 +300,8 @@ impl DualBootBlockdevice for DualbootBlkstuff {
             crate::blueprint::Partition {
                 number: (next_usable_disks.unwrap()) as u64,       // next
                 disk_path: Some(self.selected_blockdev.clone()),
-                path: Some(format!("{}{}", self.selected_blockdev.clone(), next_usable_disks.unwrap())),
+                // path: Some(format!("{}{}", self.selected_blockdev.clone(), next_usable_disks.unwrap())),
+                path: Some(disk_helper::gen_appr_disk_format(self.selected_blockdev.clone(), next_usable_disks.unwrap().into())),
                 mountpoint: Some("/".to_string()),
                 filesystem: Some(self.selected_fs.clone()),
                 format: true,

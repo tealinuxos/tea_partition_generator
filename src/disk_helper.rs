@@ -23,6 +23,19 @@ pub fn scsi_split(device: String) -> Option<String> {
     }
 }
 
+pub fn gen_appr_disk_format(device: String, partition_number: u64) -> String {
+    if device.starts_with("/dev/sd") {
+        let formatted = format!("{}{}", device, partition_number);
+        return formatted;
+    } else if device.starts_with("/dev/nvme") {
+        let formatted = format!("{}p{}", device, partition_number);
+        return formatted;
+    } else {
+        // for older drive, we may find /dev/hdX (very rare)
+        return "".to_string();
+    }
+} 
+
 
 pub fn gb2sector(x: u64, sector_size: u64) -> u64 {
     if sector_size == 0 {

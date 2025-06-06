@@ -1,6 +1,6 @@
 // this file is executed when user want Erase disk & clean install
 use crate::blueprint::{Bootloader, Partition, Storage};
-use crate::disk_helper::{mb2sector};
+use crate::disk_helper::{self, mb2sector};
 use crate::{exception, os};
 use duct::cmd;
 use serde::{Deserialize, Serialize};
@@ -190,7 +190,8 @@ impl SingleBootBlockdevice for Blkstuff {
                 disks_export.push(Partition {
                     number: counter,
                     disk_path: Some(self.selected_blockdev.clone()),
-                    path: Some(format!("{}{}", self.selected_blockdev.clone(), counter)),
+                    // path: Some(format!("{}{}", self.selected_blockdev.clone(), counter)),
+                    path: Some(disk_helper::gen_appr_disk_format(self.selected_blockdev.clone(), counter)),
                     mountpoint: Some("/boot/efi".to_string()),
                     filesystem: Some("fat32".to_string()),
                     label: None,
@@ -210,7 +211,8 @@ impl SingleBootBlockdevice for Blkstuff {
                     disks_export.push(Partition {
                         number: counter,
                         disk_path: Some(self.selected_blockdev.clone()),
-                        path: Some(format!("{}{}", self.selected_blockdev.clone(), counter)),
+                        // path: Some(format!("{}{}", self.selected_blockdev.clone(), counter)),
+                        path: Some(disk_helper::gen_appr_disk_format(self.selected_blockdev.clone(), counter)),
                         mountpoint: None,
                         filesystem: Some("linux-swap".to_string()),
                         format: true,
@@ -228,7 +230,8 @@ impl SingleBootBlockdevice for Blkstuff {
                 disks_export.push(Partition {
                     number: counter,
                     disk_path: Some(self.selected_blockdev.clone()),
-                    path: Some(format!("{}{}", self.selected_blockdev.clone(), counter)),
+                    // path: Some(format!("{}{}", self.selected_blockdev.clone(), counter)),
+                    path: Some(disk_helper::gen_appr_disk_format(self.selected_blockdev.clone(), counter)),
                     mountpoint: Some("/".to_string()), // some exception if BTRFS is used, this is unneed
                     filesystem: Some(self.selected_fs.to_string()),
                     label: None,
@@ -246,7 +249,8 @@ impl SingleBootBlockdevice for Blkstuff {
                     disks_export.push(Partition {
                         number: counter,
                         disk_path: Some(self.selected_blockdev.clone()),
-                        path: Some(format!("{}{}", self.selected_blockdev.clone(), counter)),
+                        // path: Some(format!("{}{}", self.selected_blockdev.clone(), counter)),
+                        path: Some(disk_helper::gen_appr_disk_format(self.selected_blockdev.clone(), counter)),
                         mountpoint: None,
                         filesystem: Some("linux-swap".to_string()),
                         format: true,
@@ -263,7 +267,8 @@ impl SingleBootBlockdevice for Blkstuff {
                 disks_export.push(Partition {
                     number: counter,
                     disk_path: Some(self.selected_blockdev.clone()),
-                    path: Some(format!("{}{}", self.selected_blockdev.clone(), counter)),
+                    // path: Some(format!("{}{}", self.selected_blockdev.clone(), counter)),
+                    path: Some(disk_helper::gen_appr_disk_format(self.selected_blockdev.clone(), counter)),
                     mountpoint: Some("/".to_string()),
                     filesystem: Some(self.selected_fs.to_string()),
                     label: None,
