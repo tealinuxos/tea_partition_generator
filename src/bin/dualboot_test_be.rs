@@ -13,10 +13,12 @@ async fn main() {
         true
     );
 
+    let disk = "/dev/sdb".to_string();
+
     // this number come from FE, use find_empty_space_sector_areav
-    let partition_generator_ctx = TeaPartitionGenerator::new("/dev/sdb".to_string());
+    let partition_generator_ctx = TeaPartitionGenerator::new(disk.clone());
     let start = 10899456;
-    let end = 115922943;
+    let end = 115924991;
 
     // println!("partition design: {} {}", start, end);
     // return;
@@ -27,15 +29,17 @@ async fn main() {
 
     let mut ret = ctx.getresult(start, end);
 
-    println!("runn {:#?}", ret);
+    // println!("runn {:#?}", ret);
 
-    // if let Ok(ret_val) = ret {
-    //     Partgen::do_dangerous_task_on(
-    //         ret_val.clone(), ret_val.clone().install_method
-    //     );
+    if let Ok(ret_val) = ret {
+        Os::mkdisk_uninitalized(start, end, disk.clone());
 
-    //     // let fstab = Os::append_swap_fstab(&ret_val.clone());
-    // }
+        Partgen::do_dangerous_task_on(
+            ret_val.clone(), ret_val.clone().install_method
+        );
+
+        // let fstab = Os::append_swap_fstab(&ret_val.clone());
+    }
 
 
 }
