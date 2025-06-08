@@ -199,6 +199,7 @@ impl SingleBootBlockdevice for Blkstuff {
                     start: 4096, // aligment
                     end: _end_sector,
                     size: _end_sector - 4096,
+                    flags: None
                 });
                 counter = counter + 1;
 
@@ -220,6 +221,7 @@ impl SingleBootBlockdevice for Blkstuff {
                         end: os::Os::align_2048(start_sector_again + mb2sector(swap_size, current_sector)),
                         size: mb2sector(swap_size, current_sector),
                         label: None,
+                        flags: None
                     });
 
                     start_sector_again = os::Os::align_2048(start_sector_again + mb2sector(swap_size, current_sector)) + 2048;
@@ -239,6 +241,7 @@ impl SingleBootBlockdevice for Blkstuff {
                     start: os::Os::align_2048(start_sector_again),
                     end: current_size_sector.unwrap() - 2048,
                     size: current_size_sector.unwrap() - os::Os::align_2048(start_sector_again),
+                    flags: None
                 });
             } else {
                 let mut last_sector: u64 = 4096;
@@ -258,6 +261,7 @@ impl SingleBootBlockdevice for Blkstuff {
                         end: os::Os::align_2048(last_sector + mb2sector(swap_size, current_sector)),
                         size: mb2sector(swap_size, current_sector),
                         label: None,
+                        flags: None
                     });
 
                     last_sector = os::Os::align_2048(last_sector + mb2sector(swap_size, current_sector)) + 2048;
@@ -276,6 +280,7 @@ impl SingleBootBlockdevice for Blkstuff {
                     start: os::Os::align_2048(last_sector), // aligment
                     end: current_size_sector.unwrap() - 2048,
                     size: (current_size_sector.unwrap() - 2048) - os::Os::align_2048(last_sector),
+                    flags: None
                 });
             }
 

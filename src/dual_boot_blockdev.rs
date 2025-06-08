@@ -284,7 +284,8 @@ impl DualBootBlockdevice for DualbootBlkstuff {
                     start: start,
                     end: Os::align_2048(start + mb2sector(ideal_size, sector_size)),
                     size: mb2sector(ideal_size, sector_size),
-                    label: None
+                    label: None,
+                    flags: None
                 }
             );
 
@@ -308,7 +309,8 @@ impl DualBootBlockdevice for DualbootBlkstuff {
                 start: Os::align_2048(start),
                 end: Os::align_2048(end) - 2048,
                 size: end - start,
-                label: None
+                label: None,
+                flags: None
             }
         );
         self._reserved_root_disk_num = highest_disk + 1;
