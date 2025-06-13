@@ -334,7 +334,7 @@ impl Os {
     }
 
     pub fn get_efi_blockdevice(device: String) -> Result<String, String> {
-        let data = cmd!("parted", device, "-j", "--script", "print", "--path").read();
+        let data = cmd!("parted", device, "-j", "--script", "print", "--paths").read();
 
         if let Ok(data_val) = data {
             let parted_json: serde_json::Result<serde_json::Value> =
