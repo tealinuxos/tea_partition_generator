@@ -333,8 +333,8 @@ impl Os {
         (value + alignment - 1) & !(alignment - 1)
     }
 
-    pub fn get_efi_blockdevice(device: String) -> Result<i64, String> {
-        let data = cmd!("parted", device, "-j", "--script", "print").read();
+    pub fn get_efi_blockdevice(device: String) -> Result<String, String> {
+        let data = cmd!("parted", device, "-j", "--script", "print", "--path").read();
 
         if let Ok(data_val) = data {
             let parted_json: serde_json::Result<serde_json::Value> =
@@ -361,7 +361,7 @@ impl Os {
                                     ).collect::<Vec<String>>();
 
                                 if flags_transformed.contains(&"boot".to_string()) && flags_transformed.contains(&"esp".to_string()) {
-                                    return Ok(x["number"].as_i64().unwrap()); // FIXME
+                                    return Ok(x["name"].as_str().unwrap().to_string()); // FIXME
                                 }
                                 // println!("{:#?}", flags_transformed.contains(&"espj".to_string()));
                             }
