@@ -15,9 +15,18 @@ use crate::os;
 use crate::mounting;
 
 pub fn dualboot_efi_mount_open(device: String) {
-    let blockdev_path = os::Os::get_efi_blockdevice(device.clone());
-    if let Ok(fullfilled_path) = blockdev_path {
-        // let fullfilled_path = format!("{}{}", device.clone(), blockdev_num_val);
+    let blockdev_num = os::Os::get_efi_blockdevice(device.clone());
+    if let Ok(blockdev_num_val) = blockdev_num {
+        let fullfilled_path = {
+            if device.contains("nvme")
+            {
+                format!("{}p{}", device.clone(), blockdev_num_val)
+            }
+            else
+            {
+                format!("{}{}", device.clone(), blockdev_num_val)
+            }
+        };
 
         println!("opening efi mountpoint for {}", fullfilled_path);
         mounting::MountPoint::run_mount_for(fullfilled_path, "/tealinux-mount/boot/efi".to_string(), None);
