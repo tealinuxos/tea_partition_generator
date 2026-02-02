@@ -273,11 +273,28 @@ impl SingleBootBlockdevice for Blkstuff {
                     disk_path: Some(self.selected_blockdev.clone()),
                     // path: Some(format!("{}{}", self.selected_blockdev.clone(), counter)),
                     path: Some(disk_helper::gen_appr_disk_format(self.selected_blockdev.clone(), counter)),
-                    mountpoint: Some("/".to_string()),
+                    mountpoint: Some("/boot".to_string()),
                     filesystem: Some(self.selected_fs.to_string()),
                     label: None,
                     format: true,
                     start: os::Os::align_2048(last_sector), // aligment
+                    end: os::Os::align_2048(last_sector + mb2sector(2048, current_sector)), // 2048
+                    size: mb2sector(2048, current_sector),
+                    flags: None
+                });
+                counter = counter + 1;
+                last_sector = os::Os::align_2048(last_sector + mb2sector(2048, current_sector)) + 2048;
+
+                disks_export.push(Partition {
+                    number: counter,
+                    disk_path: Some(self.selected_blockdev.clone()),
+                    // path: Some(format!("{}{}", self.selected_blockdev.clone(), counter)),
+                    path: Some(disk_helper::gen_appr_disk_format(self.selected_blockdev.clone(), counter)),
+                    mountpoint: Some("/".to_string()),
+                    filesystem: Some(self.selected_fs.to_string()),
+                    label: None,
+                    format: true,
+                    start: os::Os::align_2048(last_sector),
                     end: current_size_sector.unwrap() - 2048,
                     size: (current_size_sector.unwrap() - 2048) - os::Os::align_2048(last_sector),
                     flags: None
